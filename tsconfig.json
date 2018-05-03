@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "sourceMap": true,
+    "noImplicitAny": false,
+    "module": "es2015", // Webpack v2 can handle es6-style modules
+    "target": "es5",
+    "jsx": "react",
+    "lib": ["dom", "es2016"],
+    "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowSyntheticDefaultImports": true,
+    "strictNullChecks": true
+  },
+  // only need to include entry files; all imported files will also be transpiled
+  "files": ["./src/app.ts"]
+}

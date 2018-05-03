@@ -1,0 +1,43 @@
+{
+  "name": "zoomable-treemap-prototype",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:prod": "$(npm bin)/webpack --config webpack.prod.js",
+    "build:dev": "$(npm bin)/webpack --config webpack.dev.js",
+    "build:watch": "npm run build:dev -- -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jimvermillion/zoomable-treemap-prototype.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jimvermillion/zoomable-treemap-prototype/issues"
+  },
+  "homepage": "https://github.com/jimvermillion/zoomable-treemap-prototype#readme",
+  "dependencies": {
+    "@types/d3-axis": "~1.0",
+    "@types/d3-format": "~1.2",
+    "@types/d3-geo": "~1.9",
+    "@types/d3-scale": "~1.0",
+    "@types/d3-selection": "~1.1",
+    "@types/d3-transition": "~1.1",
+    "d3": "~5.1.0",
+    "jquery": "~3.3.1",
+    "tslint": "~5.9.1",
+    "typescript": "~2.8.3",
+    "webpack": "~4.6.0"
+  },
+  "devDependencies": {
+    "babel-polyfill": "~6.26.0",
+    "fork-ts-checker-webpack-plugin": "~0.4.1",
+    "source-map-loader": "~0.2.3",
+    "webpack-cli": "~2.1.2",
+    "webpack-merge": "~4.1.2"
+  }
+}
