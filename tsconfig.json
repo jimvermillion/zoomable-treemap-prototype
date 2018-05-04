@@ -14,5 +14,5 @@
     "strictNullChecks": true
   },
   // only need to include entry files; all imported files will also be transpiled
-  "files": ["./src/app.ts"]
+  "files": ["./src/index.tsx"]
 }
