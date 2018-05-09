@@ -5,7 +5,7 @@ import {
 import React from 'react';
 
 // Eventually handle dynamically with reference to space available
-const FONT_SIZE = 14;
+const FONT_SIZE = 26  ;
 
 interface TreemapFieldAccessors {
   label: string;
@@ -26,6 +26,7 @@ interface TreemapProps {
   stroke: string;
   strokeWidth: number | string;
   layoutOptions: LayoutOptions;
+  textDropshadow: string;
   width: number;
 };
 
@@ -82,9 +83,11 @@ export default class Treemap extends React.Component<
     />
   ));
 
-  renderText = (d) => ((
+  renderText = (d, dropshadow = '') => ((
     <text
-      key={`text-${d.id}`}
+      fill={dropshadow ? '#000' : '#fff'}
+      filter={dropshadow}
+      key={`text-${d.id}-${dropshadow}`}
       style={{
         fontSize: FONT_SIZE,
         transform: `translate(3px, ${FONT_SIZE}px)`,
@@ -100,6 +103,7 @@ export default class Treemap extends React.Component<
       style={{ transform: `translate(${d.x0}px, ${d.y0}px)` }}
     >
       {this.renderRect(d)}
+      {this.renderText(d, this.props.textDropshadow)}
       {this.renderText(d)}
     </g>
   ));

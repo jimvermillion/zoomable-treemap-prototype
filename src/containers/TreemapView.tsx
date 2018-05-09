@@ -47,6 +47,13 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
       ? <LoadingIndicator />
       : (
         <svg {...svgProps}>
+          // rip off from Evan's code.
+          <defs>
+            <filter id="dropshadow" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="2" result="shadow"></feGaussianBlur>
+              <feOffset dx="1" dy="1"></feOffset>
+            </filter>
+          </defs>
           <Treemap
             colorScale={scaleOrdinal(schemeCategory10)}
             data={data}
@@ -59,6 +66,7 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
               round: true,
               tile: treemapResquarify,
             }}
+            textDropshadow="url(#dropshadow)"
             height={777}
             width={1000}
           />
