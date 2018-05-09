@@ -5,6 +5,7 @@ const common = require('./webpack.common');
 
 // Merge webpack config common to all environments with this config.
 module.exports = merge(common, {
+  mode: 'development',
   devtool: 'eval-source-map',
   plugins: [
     new webpack.DefinePlugin({

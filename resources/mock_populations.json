@@ -1,0 +1,97 @@
+[
+  {
+    "location_name": "Seattle",
+    "location_id": 7,
+    "parent_location_id": 5,
+    "value": 9989,
+    "type": 2
+  },
+  {
+    "location_name": "Portland",
+    "location_id": 6,
+    "parent_location_id": 4,
+    "value": 3000,
+    "type": 2
+  },
+  {
+    "location_name": "Toluca de Lerdo",
+    "location_id": 13,
+    "parent_location_id": 14,
+    "value": 13000,
+    "type": 2
+  },
+  {
+    "location_name": "Berlin",
+    "location_id": 8,
+    "parent_location_id": 9,
+    "value": 20000,
+    "type": 11
+  },
+  {
+    "location_name": "Washington",
+    "location_id": 5,
+    "parent_location_id": 3,
+    "type": 2
+  },
+  {
+    "location_name": "Oregon",
+    "location_id": 4,
+    "parent_location_id": 3,
+    "type": 2
+  },
+  {
+    "location_name": "Nebraska",
+    "location_id": 16,
+    "parent_location_id": 3,
+    "value": 7000,
+    "type": 2
+  },
+  {
+    "location_name": "State of Mexico",
+    "location_id": 14,
+    "parent_location_id": 15,
+    "type": 2
+  },
+  {
+    "location_name": "Germany",
+    "location_id": 9,
+    "parent_location_id": 10,
+    "type": 11
+  },
+  {
+    "location_name": "Mexico",
+    "location_id": 15,
+    "parent_location_id": 2,
+    "type": 2
+  },
+  {
+    "location_name": "USA",
+    "location_id": 3,
+    "parent_location_id": 2,
+    "type": 2
+  },
+  {
+    "location_name": "European Union",
+    "location_id": 10,
+    "parent_location_id": 11,
+    "type": 11
+  },
+  {
+    "location_name": "Europe",
+    "location_id": 11,
+    "parent_location_id": 1,
+    "type": 11
+  },
+  {
+    "location_name": "North America",
+    "location_id": 2,
+    "parent_location_id": 1,
+    "type": 2
+  },
+  {
+    "location_name": "World",
+    "location_id": 1,
+    "parent_location_id": null,
+    "type": 0
+  }
+]
