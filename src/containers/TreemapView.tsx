@@ -33,7 +33,7 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
     super(props);
     this.state = {
       data: null,
-      showToDepth: 1,
+      showToDepth: 0,
     };
   }
 
@@ -42,14 +42,18 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
     this.setState({ data: stratifyData(data) });
   }
 
-  onClick = (_, { children, data, depth }) => {
-    console.log(data.location_name);
-    const showToDepth = (
-      children && children.length
-      ? depth + 2                   // Two feels weird. Magic. Why 2?
-      : this.state.showToDepth
-    )
-    this.setState({ showToDepth });
+  onDoubleClick = (_, data) => {
+    console.log('zoom out!', data);
+    if (data.depth > 0) {
+      this.setState({ showToDepth: data.depth - 1 });
+    }
+  }
+
+  onClick = (_, data) => {
+    console.log('zoom in!', data);
+    if (data.height > 0) {
+      this.setState({ showToDepth: data.depth + 1 });
+    }
   }
 
   render() {
@@ -85,6 +89,7 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
               //   - 'zoom' property is the parentId? Get descendants of that parent? Filter data from there?
               this.onClick
             }
+            onDoubleClick={this.onDoubleClick}
             defsUrl="url(#dropshadow)"
             height={777}
             width={1000}

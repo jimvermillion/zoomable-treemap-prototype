@@ -33,6 +33,7 @@ interface TreemapProps {
   strokeWidth: number | string;
   layoutOptions: LayoutOptions;
   onClick?: (...args: any[]) => void;
+  onDoubleClick?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
   onMouseLeave?: (...args: any[]) => void;
   onMouseMove?: (...args: any[]) => void;
@@ -45,10 +46,15 @@ interface TreemapState {
   layout: any;
 }
 
+// Time to wait to execute one click (milliseconds)
+const DOUBLE_CLICK_TIMING = 250;
+
 export default class Treemap extends React.Component<
   TreemapProps,
   TreemapState
 > {
+  clickTimeout: any;
+
   static defaultProps: Partial<TreemapProps> = {
     layoutOptions: {
       padding: 0,
@@ -67,6 +73,24 @@ export default class Treemap extends React.Component<
   constructor(props) {
     super(props);
     this.state = { layout: this.getLayout() };
+  }
+
+  componentDidMount() {
+    this.clickTimeout = null;
+  }
+
+  handleClicks = (event, data, component) => {
+    if (this.clickTimeout !== null) {
+      this.props.onDoubleClick(event, data, component);
+      clearTimeout(this.clickTimeout);
+      this.clickTimeout = null;
+    } else {
+      this.clickTimeout = setTimeout(()=>{
+        this.props.onClick(event, data, component);
+        clearTimeout(this.clickTimeout);
+        this.clickTimeout = null;
+      }, DOUBLE_CLICK_TIMING)
+    }
   }
 
   getLayout = () => {
@@ -96,7 +120,7 @@ export default class Treemap extends React.Component<
       stroke={this.props.stroke}
       width={d.x1 - d.x0}
       height={d.y1 - d.y0}
-      onClick={this.props.onClick}
+      onClick={this.handleClicks}
       onMouseOver={this.props.onClick}
       onMouseLeave={this.props.onClick}
       onMouseMove={this.props.onClick}
@@ -188,7 +212,7 @@ export default class Treemap extends React.Component<
     // Data Processing
     const layout = this.state.layout(data)
       .descendants()
-      .filter(({ depth }) => depth < showToDepth);
+      .filter(({ depth }) => depth <= showToDepth);
 
     return (
       <g>
