@@ -4,7 +4,7 @@ import {
   schemeCategory10,
   stratify,
   treemapResquarify,
-}from 'd3';
+} from 'd3';
 import { LoadingIndicator } from 'ihme-ui/es';
 import React from 'react';
 
@@ -19,8 +19,8 @@ function stratifyData(data) {
 }
 
 interface TreemapViewState {
-  data: any[] | null,
-};
+  data: any[] | null;
+}
 
 const svgProps = {
   width: 1000,
@@ -29,7 +29,7 @@ const svgProps = {
 
 export default class TreemapView extends React.PureComponent<{}, TreemapViewState> {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       data: null,
     };
