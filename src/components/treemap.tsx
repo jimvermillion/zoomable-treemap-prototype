@@ -3,14 +3,15 @@ import {
   treemapResquarify,
 } from 'd3';
 import { max } from 'd3-array';
+import noop from 'lodash-es/noop';
 import React from 'react';
+
+import Rectangle from './Rectangle';
 
 import { stringWidth } from '../utils';
 
 const FONT_SIZE_DEFAULT = 12;
 const FONT_PADDING_DEFAULT = 8;
-
-// Eventually handle dynamically with reference to space available
 
 interface TreemapFieldAccessors {
   label: string;
@@ -87,13 +88,18 @@ export default class Treemap extends React.Component<
   }
 
   renderRect = d => ((
-    <rect
+    <Rectangle
+      data={d}
       key={`rect-${d.id}`}
       fill={this.props.colorScale(d.data.type)}
       strokeWidth={this.props.strokeWidth}
       stroke={this.props.stroke}
       width={d.x1 - d.x0}
       height={d.y1 - d.y0}
+      onClick={this.props.onClick}
+      onMouseOver={this.props.onClick}
+      onMouseLeave={this.props.onClick}
+      onMouseMove={this.props.onClick}
     />
   ))
 

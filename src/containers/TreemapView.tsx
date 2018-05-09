@@ -20,7 +20,8 @@ function stratifyData(data) {
 
 interface TreemapViewState {
   data: any[] | null;
-}
+  showToDepth: number;
+};
 
 const svgProps = {
   width: 1000,
@@ -32,12 +33,23 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
     super(props);
     this.state = {
       data: null,
+      showToDepth: 1,
     };
   }
 
   async componentDidMount() {
     const data = await json('resources/mock_populations.json');
     this.setState({ data: stratifyData(data) });
+  }
+
+  onClick = (_, { children, data, depth }) => {
+    console.log(data.location_name);
+    const showToDepth = (
+      children && children.length
+      ? depth + 2                   // Two feels weird. Magic. Why 2?
+      : this.state.showToDepth
+    )
+    this.setState({ showToDepth });
   }
 
   render() {
@@ -58,15 +70,22 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
             colorScale={scaleOrdinal(schemeCategory10)}
             data={data}
             fieldAccessors={{ label: 'location_name' }}
-            showToDepth={1}
+            showToDepth={this.state.showToDepth}
             stroke={'#fff'}
-            strokeWidth={1}
+            strokeWidth={3}
             layoutOptions={{
               padding: 0,
               round: true,
               tile: treemapResquarify,
             }}
-            textDropshadow="url(#dropshadow)"
+            onClick={
+              // this needs to attach it's own state to a 'zoom' property within this view container
+              // Click on 'World'
+              //   - increase depth by one (if available)
+              //   - 'zoom' property is the parentId? Get descendants of that parent? Filter data from there?
+              this.onClick
+            }
+            defsUrl="url(#dropshadow)"
             height={777}
             width={1000}
             fontSize={[10, 48]}
