@@ -2,6 +2,8 @@ import { treemap, treemapResquarify } from 'd3';
 import { max } from "d3-array";
 import React from 'react';
 
+import { stringWidth } from '../utils';
+
 // Eventually handle dynamically with reference to space available
 
 interface TreemapFieldAccessors {
@@ -24,6 +26,7 @@ interface TreemapProps {
   strokeWidth: number | string;
   layoutOptions: LayoutOptions;
   width: number;
+  fontSize: any;
 }
 
 interface TreemapState {
@@ -79,55 +82,41 @@ export default class Treemap extends React.Component<
     />
   ))
 
-    stringWidth = (stringThing, size = 12) => {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        if (context) {
-            context.font = `${size}px Verdana`;
-            return Math.ceil(context.measureText(stringThing).width);
-        }
-        return 0;
-    }
-
-    _fontSize = d => {
-        const minValue = 10;
-        const maxValue = 48;
-
+    sizingProperties = d => {
+        const [ minValue, maxValue ] = this.props.fontSize;
         const x = max([0, Math.floor(((d.x1 - d.x0) - 8))]);
         const y = max([0, Math.floor(((d.y1 - d.y0) - 8))]);
-
-        let size;
         const label = d.data.location_name;
-        const width = (this.stringWidth(label, 12) / 12);
-        const direction = ((y > x && (width * (minValue + 1)) > x) ? 'tb' : 'lr');
+        const width = stringWidth(label, 12) / 12;
+        const direction = (y > x && (width * (minValue + 1)) > x) ? 'topBottom' : 'leftRight';
+        return { x, y, width, direction, minValue, maxValue };
+    }
 
-        if (direction === 'lr') { size = (y < (x / width)) ? y : (x / width); }
-        if (direction === 'tb') { size = (x < (y / width)) ? x : (y / width); }
-
+    fontSize = d => {
+        const { x, y, width, direction, minValue, maxValue } = this.sizingProperties(d);
+        let size;
+        if (direction === 'leftRight') { size = (y < (x / width)) ? y : (x / width); }
+        if (direction === 'topBottom') { size = (x < (y / width)) ? x : (y / width); }
         if (size < minValue) { size = 0; }
         if (size >= maxValue) { size = maxValue; }
-
         return size;
     }
 
-    _fontDirection = d => {
-        const min = 10;
-        const x = max([0, Math.floor(((d.x1 - d.x0) - 8))]);
-        const y = max([0, Math.floor(((d.y1 - d.y0) - 8))]);
-        const label = d.data.location_name;
-        const width = this.stringWidth(label, 12) / 12;
-        const direction = (y > x && (width * (min + 1)) > x) ? 'tb' : 'lr';
-        const lr = `translate(3px, ${this._fontSize(d)}px) rotate(0)`;
-        const tb = `translate(${this._fontSize(d) / 3}px, 3px) rotate(90deg)`;
-        return (direction === 'lr') ? lr : tb;
+    fontDirection = d => {
+        const { direction } = this.sizingProperties(d);
+        const orientation = {
+            leftRight: `translate(3px, ${this.fontSize(d)}px) rotate(0)`,
+            topBottom: `translate(${this.fontSize(d) / 3}px, 3px) rotate(90deg)`,
+        };
+        return (direction === 'leftRight') ? orientation.leftRight : orientation.topBottom;
     }
 
   renderText = (d) => ((
     <text
       key={`text-${d.id}`}
       style={{
-        fontSize: this._fontSize(d),
-        transform: this._fontDirection(d),
+        fontSize: this.fontSize(d),
+        transform: this.fontDirection(d),
       }}
     >
       {d.data[this.props.fieldAccessors.label]}

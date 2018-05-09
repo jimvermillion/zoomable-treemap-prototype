@@ -61,6 +61,7 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
             }}
             height={777}
             width={1000}
+            fontSize={[10, 48]}
           />
         </svg>
       )
