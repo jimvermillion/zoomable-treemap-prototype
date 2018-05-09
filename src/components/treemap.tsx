@@ -31,7 +31,11 @@ interface TreemapProps {
   stroke: string;
   strokeWidth: number | string;
   layoutOptions: LayoutOptions;
-  textDropshadow: string;
+  onClick?: (...args: any[]) => void;
+  onMouseOver?: (...args: any[]) => void;
+  onMouseLeave?: (...args: any[]) => void;
+  onMouseMove?: (...args: any[]) => void;
+  defsUrl?: string;
   width: number;
   fontSize: any;
 }
@@ -50,6 +54,10 @@ export default class Treemap extends React.Component<
       round: true,
       tile: treemapResquarify,
     },
+    onClick: noop,
+    onMouseOver: noop,
+    onMouseLeave: noop,
+    onMouseMove: noop,
     showToDepth: 1,
     stroke: '#fff',
     strokeWidth: 1,

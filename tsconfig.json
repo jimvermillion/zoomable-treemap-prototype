@@ -11,7 +11,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "allowSyntheticDefaultImports": true,
-    "strictNullChecks": true
+    "strictNullChecks": false
   },
   // only need to include entry files; all imported files will also be transpiled
   "files": ["./src/index.tsx"]
