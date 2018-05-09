@@ -103,7 +103,7 @@ export default class Treemap extends React.Component<
       style={{ transform: `translate(${d.x0}px, ${d.y0}px)` }}
     >
       {this.renderRect(d)}
-      {this.renderText(d, this.props.textDropshadow)}
+      {this.props.textDropshadow && this.renderText(d, this.props.textDropshadow)}
       {this.renderText(d)}
     </g>
   ));
