@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface RectangleProps {
-  data: any,
+  data: any;
   fill: string;
   height: number;
   stroke: string;
@@ -11,7 +11,7 @@ interface RectangleProps {
   onMouseLeave: (...args: any[]) => void;
   onMouseMove: (...args: any[]) => void;
   width: number;
-};
+}
 
 export default class Rectangle extends React.PureComponent<RectangleProps> {
   onClick = event => {

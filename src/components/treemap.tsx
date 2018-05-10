@@ -28,7 +28,7 @@ interface TreemapProps {
   data: any;
   defsUrl?: string;
   fieldAccessors: TreemapFieldAccessors;
-  fontSize: number[] | string[];
+  fontSize: number[];
   height: number;
   layoutOptions: LayoutOptions;
   onClick?: (...args: any[]) => void;
@@ -42,7 +42,7 @@ interface TreemapProps {
   width: number;
   xScale: (num: number) => number;
   yScale: (num: number) => number;
-};
+}
 
 interface TreemapState {
   layout: any;
@@ -55,8 +55,6 @@ export default class Treemap extends React.Component<
   TreemapProps,
   TreemapState
 > {
-  clickTimeout: any;
-
   static defaultProps: Partial<TreemapProps> = {
     layoutOptions: {
       padding: 0,
@@ -71,6 +69,8 @@ export default class Treemap extends React.Component<
     stroke: '#fff',
     strokeWidth: 1,
   };
+
+  clickTimeout: any;
 
   constructor(props) {
     super(props);
@@ -87,11 +87,11 @@ export default class Treemap extends React.Component<
       clearTimeout(this.clickTimeout);
       this.clickTimeout = null;
     } else {
-      this.clickTimeout = setTimeout(()=>{
+      this.clickTimeout = setTimeout(() => {
         this.props.onClick(event, data, component);
         clearTimeout(this.clickTimeout);
         this.clickTimeout = null;
-      }, DOUBLE_CLICK_TIMING)
+      }, DOUBLE_CLICK_TIMING);
     }
   }
 
@@ -191,7 +191,7 @@ export default class Treemap extends React.Component<
         onMouseMove={onMouseMove}
       />
     );
-  };
+  }
 
   renderText = (d, dropshadow = '') => ((
     <text
@@ -224,7 +224,7 @@ export default class Treemap extends React.Component<
         {this.renderText(d)}
       </g>
     );
-  };
+  }
 
   render() {
     const {

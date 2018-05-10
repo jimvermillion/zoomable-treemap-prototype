@@ -24,7 +24,7 @@ interface TreemapViewState {
   showToDepth: number;
   xScale: any;
   yScale: any;
-};
+}
 
 const svgProps = {
   width: 1000,
@@ -55,6 +55,7 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
   }
 
   onDoubleClick = (_, data) => {
+    // tslint:disable-next-line:no-console
     console.log('zoom out!', data);
     if (data.depth > 0) {
       this.setState({
@@ -76,6 +77,7 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
   }
 
   onClick = (_, data) => {
+    // tslint:disable-next-line:no-console
     console.log('zoom in!', data);
     this.updateScales(data);
     if (data.height > 0) {
