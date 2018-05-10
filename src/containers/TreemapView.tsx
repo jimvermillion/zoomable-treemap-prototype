@@ -1,11 +1,13 @@
+import { json } from 'd3-fetch';
 import {
-  json,
-  scaleLinear,
-  scaleOrdinal,
-  schemeCategory10,
   stratify,
   treemapResquarify,
-} from 'd3';
+} from 'd3-hierarchy';
+import {
+  scaleLinear,
+  scaleOrdinal,
+} from 'd3-scale';
+import { schemeCategory10 } from 'd3-scale-chromatic';
 import { LoadingIndicator } from 'ihme-ui/es';
 import React from 'react';
 

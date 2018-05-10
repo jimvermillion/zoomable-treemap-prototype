@@ -1,8 +1,8 @@
+import { max } from 'd3-array';
 import {
   treemap,
   treemapResquarify,
-} from 'd3';
-import { max } from 'd3-array';
+} from 'd3-hierarchy';
 import noop from 'lodash-es/noop';
 import React from 'react';
 
