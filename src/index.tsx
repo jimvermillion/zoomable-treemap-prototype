@@ -3,9 +3,9 @@ import 'ihme-ui/dist/ihme-ui.css';
 import React from 'react';
 import ReactDom from 'react-dom';
 
-import TreemapView from './containers/TreemapView';
+import App from './containers/App';
 
 ReactDom.render(
-  <TreemapView />,
+  <App />,
   document.getElementById('app'),
 );
