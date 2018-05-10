@@ -10,8 +10,11 @@ import Rectangle from './Rectangle';
 
 import { stringWidth } from '../utils';
 
+// Constants
+const DOUBLE_CLICK_TIMING = 250;
 const FONT_SIZE_DEFAULT = 12;
 const FONT_PADDING_DEFAULT = 8;
+const FONT_MARGIN_DEFAULT = 3;
 
 interface TreemapFieldAccessors {
   label: string;
@@ -47,9 +50,6 @@ interface TreemapProps {
 interface TreemapState {
   layout: any;
 }
-
-// Time to wait to execute one click (milliseconds)
-const DOUBLE_CLICK_TIMING = 250;
 
 export default class Treemap extends React.Component<
   TreemapProps,
@@ -158,8 +158,8 @@ export default class Treemap extends React.Component<
   fontDirection = d => {
     const { direction } = this.sizingProperties(d);
     const orientation = {
-      leftRight: `translate(3px, ${this.fontSize(d)}px) rotate(0)`,
-      topBottom: `translate(${this.fontSize(d) / 3}px, 3px) rotate(90deg)`,
+      leftRight: `translate(${FONT_MARGIN_DEFAULT}px, ${this.fontSize(d)}px) rotate(0)`,
+      topBottom: `translate(${this.fontSize(d) / FONT_MARGIN_DEFAULT}px, ${FONT_MARGIN_DEFAULT}px) rotate(90deg)`,
     };
     return (direction === 'leftRight') ? orientation.leftRight : orientation.topBottom;
   }
