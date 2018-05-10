@@ -40,6 +40,13 @@
     "type": 2
   },
   {
+    "location_name": "Nebraska",
+    "location_id": 16,
+    "parent_location_id": 3,
+    "value": 7000,
+    "type": 2
+  },
+  {
     "location_name": "State of Mexico",
     "location_id": 14,
     "parent_location_id": 15,

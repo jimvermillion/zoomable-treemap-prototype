@@ -25,6 +25,7 @@ interface TreemapProps {
   stroke: string;
   strokeWidth: number | string;
   layoutOptions: LayoutOptions;
+  textDropshadow: string;
   width: number;
   fontSize: any;
 }
@@ -111,9 +112,11 @@ export default class Treemap extends React.Component<
         return (direction === 'leftRight') ? orientation.leftRight : orientation.topBottom;
     }
 
-  renderText = (d) => ((
+  renderText = (d, dropshadow = '') => ((
     <text
-      key={`text-${d.id}`}
+      fill={dropshadow ? '#000' : '#fff'}
+      filter={dropshadow}
+      key={`text-${d.id}-${dropshadow}`}
       style={{
         fontSize: this.fontSize(d),
         transform: this.fontDirection(d),
@@ -129,6 +132,7 @@ export default class Treemap extends React.Component<
       style={{ transform: `translate(${d.x0}px, ${d.y0}px)` }}
     >
       {this.renderRect(d)}
+      {this.props.textDropshadow && this.renderText(d, this.props.textDropshadow)}
       {this.renderText(d)}
     </g>
   ))
