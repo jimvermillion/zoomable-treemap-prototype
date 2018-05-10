@@ -21,18 +21,19 @@ Resizing:
 * [ ] Hopefully the <ResponsiveContainer/> will work to pass in `width and height`
 
 zoom:
-* [ ] It looks like there are a few ways to go about it, but perhaps using a scale will work best
-* [ ] filtering data is also an option.
-* [ ] state-wise, there is some logic to which Node we are zooming and what `showToDepth` to pass to the <Treemap/> component.
-    * [ ] Adding event handlers would be necessary and it would be smart to handle them here.
-    * [ ] another challenge is the double-click within react components. Evan made a chart extend the EventEmitter class which made it possible to attach custom events like a timed double-click.
+* [x] Scale x/y to zoom
+* [x] state-wise, there is some logic to which Node we are zooming and what `showToDepth` to pass to the <Treemap/> component.
+* [x] Adding event handlers would be necessary and it would be smart to handle them here, including double-click.
+
+possible performance enhancements:
+* [ ] filtering data is also an option. Could filter by only the descendants of zoomed node whose `depth` is less than that of `showToDepth`.
 
 attribution:
 * [ ] how does Evan do it?
-    - can we apply this to ours
+    * [ ] can we apply this to ours
 * [ ] figure it (discovery)
     * [ ] implement it.
 
 prototype specific functionality:
 * [ ] UI element such as a slider to control depth/breakdown
-* [ ] click to zoom
+* [x] click to zoom
