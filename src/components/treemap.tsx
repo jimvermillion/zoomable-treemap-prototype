@@ -26,21 +26,23 @@ interface LayoutOptions {
 interface TreemapProps {
   colorScale: (input: number | string) => string;
   data: any;
+  defsUrl?: string;
   fieldAccessors: TreemapFieldAccessors;
+  fontSize: number[] | string[];
   height: number;
-  showToDepth: number;
-  stroke: string;
-  strokeWidth: number | string;
   layoutOptions: LayoutOptions;
   onClick?: (...args: any[]) => void;
   onDoubleClick?: (...args: any[]) => void;
-  onMouseOver?: (...args: any[]) => void;
   onMouseLeave?: (...args: any[]) => void;
   onMouseMove?: (...args: any[]) => void;
-  defsUrl?: string;
+  onMouseOver?: (...args: any[]) => void;
+  showToDepth: number;
+  stroke: string;
+  strokeWidth: number | string;
   width: number;
-  fontSize: any;
-}
+  xScale: (num: number) => number;
+  yScale: (num: number) => number;
+};
 
 interface TreemapState {
   layout: any;

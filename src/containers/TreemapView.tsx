@@ -1,5 +1,6 @@
 import {
   json,
+  scaleLinear,
   scaleOrdinal,
   schemeCategory10,
   stratify,
@@ -21,6 +22,8 @@ function stratifyData(data) {
 interface TreemapViewState {
   data: any[] | null;
   showToDepth: number;
+  xScale: any;
+  yScale: any;
 };
 
 const svgProps = {
@@ -34,6 +37,8 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
     this.state = {
       data: null,
       showToDepth: 0,
+      xScale: scaleLinear().domain([0, svgProps.width]).range([0, svgProps.width]),
+      yScale: scaleLinear().domain([0, svgProps.height]).range([0, svgProps.height]),
     };
   }
 
@@ -42,22 +47,52 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
     this.setState({ data: stratifyData(data) });
   }
 
+  updateScales = ({ x0, x1, y0, y1 }) => {
+    this.setState({
+      xScale: this.state.xScale.domain([x0, x1]),
+      yScale: this.state.yScale.domain([y0, y1]),
+    });
+  }
+
   onDoubleClick = (_, data) => {
     console.log('zoom out!', data);
     if (data.depth > 0) {
-      this.setState({ showToDepth: data.depth - 1 });
+      this.setState({
+        showToDepth: data.depth - 1,
+      });
     }
+
+    // Go to grandparent, parent, or self if cannot zoom out further.
+    const ancestor = (
+      // Use grand parent.
+      (data.parent && data.parent.parent)
+      // Use parent if no grand parent.
+      || data.parent
+      // Use self if there are no ancestors.
+      || data
+    );
+
+    this.updateScales(ancestor);
   }
 
   onClick = (_, data) => {
     console.log('zoom in!', data);
+    this.updateScales(data);
     if (data.height > 0) {
-      this.setState({ showToDepth: data.depth + 1 });
+      this.setState({
+        showToDepth: data.depth + 1,
+      });
     }
   }
 
   render() {
-    const { data } = this.state;
+    const {
+      data,
+      showToDepth,
+      xScale,
+      yScale,
+    } = this.state;
+
     return (
       !data
       ? <LoadingIndicator />
@@ -74,7 +109,7 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
             colorScale={scaleOrdinal(schemeCategory10)}
             data={data}
             fieldAccessors={{ label: 'location_name' }}
-            showToDepth={this.state.showToDepth}
+            showToDepth={showToDepth}
             stroke={'#fff'}
             strokeWidth={3}
             layoutOptions={{
@@ -82,18 +117,14 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
               round: true,
               tile: treemapResquarify,
             }}
-            onClick={
-              // this needs to attach it's own state to a 'zoom' property within this view container
-              // Click on 'World'
-              //   - increase depth by one (if available)
-              //   - 'zoom' property is the parentId? Get descendants of that parent? Filter data from there?
-              this.onClick
-            }
+            onClick={this.onClick}
             onDoubleClick={this.onDoubleClick}
             defsUrl="url(#dropshadow)"
             height={777}
             width={1000}
             fontSize={[10, 48]}
+            xScale={xScale}
+            yScale={yScale}
           />
         </svg>
       )
