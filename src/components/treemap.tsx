@@ -113,22 +113,6 @@ export default class Treemap extends React.Component<
       .padding(padding);
   }
 
-  renderRect = d => ((
-    <Rectangle
-      data={d}
-      key={`rect-${d.id}`}
-      fill={this.props.colorScale(d.data.type)}
-      strokeWidth={this.props.strokeWidth}
-      stroke={this.props.stroke}
-      width={d.x1 - d.x0}
-      height={d.y1 - d.y0}
-      onClick={this.handleClicks}
-      onMouseOver={this.props.onClick}
-      onMouseLeave={this.props.onClick}
-      onMouseMove={this.props.onClick}
-    />
-  ))
-
   sizingProperties = d => {
     const [minValue, maxValue] = this.props.fontSize;
     const x = max([0, Math.floor(((d.x1 - d.x0) - FONT_PADDING_DEFAULT))]);
@@ -180,6 +164,35 @@ export default class Treemap extends React.Component<
     return (direction === 'leftRight') ? orientation.leftRight : orientation.topBottom;
   }
 
+  renderRect = d => {
+    const {
+      colorScale,
+      onMouseMove,
+      onMouseLeave,
+      onMouseOver,
+      stroke,
+      strokeWidth,
+      xScale,
+      yScale,
+    } = this.props;
+
+    return (
+      <Rectangle
+        data={d}
+        key={`rect-${d.id}`}
+        fill={colorScale(d.data.type)}
+        strokeWidth={strokeWidth}
+        stroke={stroke}
+        width={xScale(d.x1) - xScale(d.x0)}
+        height={yScale(d.y1) - yScale(d.y0)}
+        onClick={this.handleClicks}
+        onMouseOver={onMouseOver}
+        onMouseLeave={onMouseLeave}
+        onMouseMove={onMouseMove}
+      />
+    );
+  };
+
   renderText = (d, dropshadow = '') => ((
     <text
       fill={dropshadow ? '#000' : '#fff'}
@@ -194,16 +207,24 @@ export default class Treemap extends React.Component<
     </text>
   ))
 
-  renderCell = d => ((
-    <g
-      key={`cell-${d.id}`}
-      style={{ transform: `translate(${d.x0}px, ${d.y0}px)` }}
-    >
-      {this.renderRect(d)}
-      {this.props.defsUrl && this.renderText(d, this.props.defsUrl)}
-      {this.renderText(d)}
-    </g>
-  ))
+  renderCell = d => {
+    const {
+      defsUrl,
+      xScale,
+      yScale,
+    } = this.props;
+
+    return (
+      <g
+        key={`cell-${d.id}`}
+        style={{transform: `translate(${xScale(d.x0)}px, ${yScale(d.y0)}px)`}}
+      >
+        {this.renderRect(d)}
+        {defsUrl && this.renderText(d, defsUrl)}
+        {this.renderText(d)}
+      </g>
+    );
+  };
 
   render() {
     const {
