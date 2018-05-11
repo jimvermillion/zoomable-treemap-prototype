@@ -8,6 +8,7 @@ import {
 } from 'ihme-ui/es';
 import React from 'react';
 
+import DropShadowDefs from '../components/DropShadowDefs';
 import TreemapView from './TreemapView';
 
 interface AppState {
@@ -39,14 +40,13 @@ export default class App extends React.PureComponent<{}, AppState> {
       data
         ? (
           <section>
+            <DropShadowDefs id="dropshadow" />
             <svg height={777} width={1000}>
-              <defs>
-                <filter id="dropshadow" width="120%" height="120%">
-                  <feGaussianBlur stdDeviation="2" result="shadow"></feGaussianBlur>
-                  <feOffset dx="1" dy="1"></feOffset>
-                </filter>
-              </defs>
-              <TreemapView data={data} height={777} width={1000} />
+              <TreemapView
+                data={data}
+                height={777}
+                width={1000}
+              />
             </svg>
           </section>
         )
