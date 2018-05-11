@@ -9,6 +9,7 @@ import {
 import React from 'react';
 
 import DropShadowDefs from '../components/DropShadowDefs';
+import ResponsiveSVG from '../components/ResponsiveSVG';
 import TreemapView from './TreemapView';
 
 interface AppState {
@@ -41,13 +42,14 @@ export default class App extends React.PureComponent<{}, AppState> {
         ? (
           <section>
             <DropShadowDefs id="dropshadow" />
-            <svg height={777} width={1000}>
-              <TreemapView
-                data={data}
-                height={777}
-                width={1000}
-              />
-            </svg>
+
+            <ResponsiveSVG
+              height={777}
+              width={1000}
+            >
+              <TreemapView data={data} />
+            </ResponsiveSVG>
+
           </section>
         )
         : <LoadingIndicator />
