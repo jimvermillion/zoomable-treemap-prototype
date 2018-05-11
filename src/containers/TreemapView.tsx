@@ -27,19 +27,27 @@ export default class TreemapView extends React.PureComponent<
   constructor(props) {
     super(props);
 
-    const {
-      height,
-      width,
-    } = props;
-
     this.state = {
       showToDepth: 0,
-      xScale: scaleLinear().domain([0, width]).range([0, width]),
-      yScale: scaleLinear().domain([0, height]).range([0, height]),
+      ...this.getUpdatedScales(props),
     };
   }
 
-  updateScales = ({ x0, x1, y0, y1 }) => {
+  componentWillReceiveProps(nextProps: TreemapViewProps) {
+    this.setState(this.getUpdatedScales(nextProps));
+  }
+
+  getUpdatedScales = ({ height, width }: TreemapViewProps) => ({
+    xScale: scaleLinear().domain([0, width]).range([0, width]),
+    yScale: scaleLinear().domain([0, height]).range([0, height]),
+  });
+
+  updateScalesDomain = ({
+    x0,
+    x1,
+    y0,
+    y1,
+  }) => {
     this.setState({
       xScale: this.state.xScale.domain([x0, x1]),
       yScale: this.state.yScale.domain([y0, y1]),
@@ -65,13 +73,13 @@ export default class TreemapView extends React.PureComponent<
       || data
     );
 
-    this.updateScales(ancestor);
+    this.updateScalesDomain(ancestor);
   }
 
   onClick = (_, data) => {
     // tslint:disable-next-line:no-console
     console.log('zoom in!', data);
-    this.updateScales(data);
+    this.updateScalesDomain(data);
     if (data.height > 0) {
       this.setState({
         showToDepth: data.depth + 1,
@@ -85,6 +93,7 @@ export default class TreemapView extends React.PureComponent<
       height,
       width,
     } = this.props;
+
     const {
       showToDepth,
       xScale,

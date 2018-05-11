@@ -4,7 +4,7 @@ import { json } from 'd3-fetch';
 import { stratify } from 'd3-hierarchy';
 import {
   LoadingIndicator,
-  // ResponsiveContainer,
+  ResponsiveContainer,
 } from 'ihme-ui/es';
 import React from 'react';
 
@@ -40,16 +40,17 @@ export default class App extends React.PureComponent<{}, AppState> {
     return (
       data
         ? (
-          <section>
+          <section
+            style={{ height: '100%', flex: '1 1 auto' }}
+          >
+
+            <ResponsiveContainer>
+              <ResponsiveSVG>
+                <TreemapView data={data} />
+              </ResponsiveSVG>
+            </ResponsiveContainer>
+
             <DropShadowDefs id="dropshadow" />
-
-            <ResponsiveSVG
-              height={777}
-              width={1000}
-            >
-              <TreemapView data={data} />
-            </ResponsiveSVG>
-
           </section>
         )
         : <LoadingIndicator />

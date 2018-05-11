@@ -32,7 +32,7 @@ interface TreemapProps {
   defsUrl?: string;
   fieldAccessors: TreemapFieldAccessors;
   fontSize: number[];
-  height?: number;
+  height: number;
   layoutOptions: LayoutOptions;
   onClick?: (...args: any[]) => void;
   onDoubleClick?: (...args: any[]) => void;
@@ -42,7 +42,7 @@ interface TreemapProps {
   showToDepth: number;
   stroke: string;
   strokeWidth: number | string;
-  width?: number;
+  width: number;
   xScale: (num: number) => number;
   yScale: (num: number) => number;
 }
@@ -79,6 +79,12 @@ export default class Treemap extends React.Component<
 
   componentDidMount() {
     this.clickTimeout = null;
+  }
+
+  componentWillReceiveProps({ width, height }) {
+    this.setState({
+      layout: this.state.layout.size([width, height]),
+    });
   }
 
   handleClicks = (event, data, component) => {
