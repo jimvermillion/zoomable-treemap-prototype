@@ -1,9 +1,4 @@
-import { treemapResquarify } from 'd3-hierarchy';
-import {
-  scaleLinear,
-  scaleOrdinal,
-} from 'd3-scale';
-import { schemeCategory10 } from 'd3-scale-chromatic';
+import { scaleLinear } from 'd3-scale';
 import React from 'react';
 
 import Treemap from '../components/treemap';
@@ -137,21 +132,12 @@ export default class TreemapView extends React.PureComponent<
 
     return (
       <Treemap
-        colorScale={scaleOrdinal(schemeCategory10)}
         data={data}
         fieldAccessors={{ label: 'location_name' }}
         showToDepth={showToDepth}
-        stroke={'#fff'}
-        strokeWidth={3}
-        layoutOptions={{
-          padding: 0,
-          round: true,
-          tile: treemapResquarify,
-        }}
         onClick={this.onClick}
         onDoubleClick={this.onDoubleClick}
         defsUrl="url(#dropshadow)"
-        fontSize={[10, 48]}
         xScale={xScale}
         yScale={yScale}
         height={height}

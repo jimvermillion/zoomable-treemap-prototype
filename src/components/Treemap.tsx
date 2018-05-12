@@ -3,6 +3,8 @@ import {
   treemap,
   treemapResquarify,
 } from 'd3-hierarchy';
+import { scaleOrdinal } from 'd3-scale';
+import { schemeCategory10 } from 'd3-scale-chromatic';
 import noop from 'lodash-es/noop';
 import React from 'react';
 
@@ -27,21 +29,21 @@ interface LayoutOptions {
 }
 
 interface TreemapProps {
-  colorScale: (input: number | string) => string;
+  colorScale?: (input: number | string) => string;
   data: any;
   defsUrl?: string;
   fieldAccessors: TreemapFieldAccessors;
-  fontSize: number[];
+  fontSize?: number[];
   height: number;
-  layoutOptions: LayoutOptions;
+  layoutOptions?: LayoutOptions;
   onClick?: (...args: any[]) => void;
   onDoubleClick?: (...args: any[]) => void;
   onMouseLeave?: (...args: any[]) => void;
   onMouseMove?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
   showToDepth: number;
-  stroke: string;
-  strokeWidth: number | string;
+  stroke?: string;
+  strokeWidth?: number | string;
   width: number;
   xScale: (num: number) => number;
   yScale: (num: number) => number;
@@ -56,6 +58,8 @@ export default class Treemap extends React.Component<
   TreemapState
 > {
   static defaultProps: Partial<TreemapProps> = {
+    colorScale: scaleOrdinal(schemeCategory10),
+    fontSize: [10, 48],
     layoutOptions: {
       padding: 0,
       round: true,
@@ -67,7 +71,7 @@ export default class Treemap extends React.Component<
     onMouseMove: noop,
     showToDepth: 1,
     stroke: '#fff',
-    strokeWidth: 1,
+    strokeWidth: 3,
   };
 
   clickTimeout: any;
