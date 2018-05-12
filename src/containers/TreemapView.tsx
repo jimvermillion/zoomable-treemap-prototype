@@ -19,41 +19,24 @@ interface TreemapViewState {
   yScale: any;
 }
 
+interface RectangleDimension {
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+}
+
 export default class TreemapView extends React.PureComponent<
   TreemapViewProps,
   TreemapViewState
 > {
   static defaultProps: Partial<TreemapViewProps> = {
     rootNode: {},
-    xScale: scaleLinear(), // Probably should not be a prop
-    yScale: scaleLinear(), // Probably should not be a prop
   };
 
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      rootNode: props.rootNode,
-      showToDepth: 0,
-      ...this.getInitialScales(props),
-    };
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const dimensions = this.getScaleDimensions(nextProps, this.state.rootNode);
-    this.setState(this.getScales(dimensions, this.state));
-  }
-
-  getInitialScales = (props) => {
-    return this.getScales(
-      this.getScaleDimensions(props, props.rootNode),
-      props,
-    );
-  }
-
-  getScaleDimensions = (
+  static getScaleDimensions = (
     { height, width },
-    { x0, x1, y0, y1 },
+    { x0, x1, y0, y1 }: RectangleDimension,
   ) => ({
     x0: x0 || 0,
     x1: x1 || width,
@@ -61,23 +44,43 @@ export default class TreemapView extends React.PureComponent<
     y1: y1 || height,
   })
 
-  getScales = (
-    { x0, x1, y0, y1 },
+  static getScales = (
+    { height, width }: Partial<TreemapViewProps>,
+    { x0, x1, y0, y1 }: RectangleDimension,
     { xScale, yScale },
   ) => ({
-    xScale: xScale.domain([x0, x1]).range([0, this.props.width]),
-    yScale: yScale.domain([y0, y1]).range([0, this.props.height]),
+    xScale: xScale.domain([x0, x1]).range([0, width]),
+    yScale: yScale.domain([y0, y1]).range([0, height]),
   })
 
-  // would getScales just do this too???
-  getUpdatedScalesDomain = ({ x0, x1, y0, y1 }) => ({
-    xScale: this.state.xScale.domain([x0, x1]),
-    yScale: this.state.yScale.domain([y0, y1]),
-  })
+  constructor(props) {
+    super(props);
 
-  updateScalesDomain = (dims) => {
-    const newScales = this.getScales(dims, this.state);
-    this.setState(newScales);
+    // Perhaps. this should be abstracted?
+    const { xScale, yScale } = TreemapView.getScales(
+      props,
+      TreemapView.getScaleDimensions(props, props.rootNode),
+      { xScale: scaleLinear(), yScale: scaleLinear() },
+    );
+
+    this.state = {
+      rootNode: props.rootNode,
+      showToDepth: 0,
+      xScale,
+      yScale,
+    };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    // Possible problems with zoom | responsive window -- parent width/height. erratic
+    const dimensions = TreemapView.getScaleDimensions(nextProps, this.state.rootNode);
+
+    const { xScale, yScale } = TreemapView.getScales(nextProps, dimensions, this.state);
+
+    this.setState({
+      xScale,
+      yScale,
+    });
   }
 
   onDoubleClick = (_, data) => {
@@ -100,7 +103,7 @@ export default class TreemapView extends React.PureComponent<
     );
 
     this.setState({ rootNode: ancestor });
-    this.updateScalesDomain(ancestor);
+    TreemapView.getScales(this.props, ancestor, this.state);
   }
 
   onClick = (_, data) => {
@@ -108,7 +111,7 @@ export default class TreemapView extends React.PureComponent<
     console.log('zoom in!', data);
 
     this.setState({ rootNode: data });
-    this.updateScalesDomain(data);
+    TreemapView.getScales(this.props, data, this.state);
 
     if (data.height > 0) {
       this.setState({
@@ -129,6 +132,9 @@ export default class TreemapView extends React.PureComponent<
       xScale,
       yScale,
     } = this.state;
+
+    // tslint:disable-next-line:no-console
+    console.log('current zoom on', this.state.rootNode.data && this.state.rootNode.data.location_name);
 
     return (
       <Treemap
