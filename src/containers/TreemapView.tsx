@@ -1,4 +1,7 @@
-import { scaleLinear } from 'd3-scale';
+import {
+  ScaleLinear,
+  scaleLinear,
+} from 'd3-scale';
 import React from 'react';
 
 import Treemap from '../components/treemap';
@@ -7,16 +10,14 @@ interface TreemapViewProps {
   data: any;
   height?: number;
   rootNode?: any;
-  xScale?: any;
-  yScale?: any;
   width?: number;
 }
 
 interface TreemapViewState {
   rootNode?: any;
   showToDepth: number;
-  xScale: any;
-  yScale: any;
+  xScale: ScaleLinear<number, number>;
+  yScale: ScaleLinear<number, number>;
 }
 
 interface RectangleDimension {
@@ -35,7 +36,7 @@ export default class TreemapView extends React.PureComponent<
   };
 
   static getScaleDimensions = (
-    { height, width },
+    { height, width }: Partial<TreemapViewProps>,
     { x0, x1, y0, y1 }: RectangleDimension,
   ) => ({
     x0: x0 || 0,
@@ -47,7 +48,7 @@ export default class TreemapView extends React.PureComponent<
   static getScales = (
     { height, width }: Partial<TreemapViewProps>,
     { x0, x1, y0, y1 }: RectangleDimension,
-    { xScale, yScale },
+    { xScale, yScale }: Partial<TreemapViewState>,
   ) => ({
     xScale: xScale.domain([x0, x1]).range([0, width]),
     yScale: yScale.domain([y0, y1]).range([0, height]),
@@ -60,7 +61,7 @@ export default class TreemapView extends React.PureComponent<
     const { xScale, yScale } = TreemapView.getScales(
       props,
       TreemapView.getScaleDimensions(props, props.rootNode),
-      { xScale: scaleLinear(), yScale: scaleLinear() },
+      { xScale: scaleLinear<number, number>(), yScale: scaleLinear<number, number>() },
     );
 
     this.state = {
