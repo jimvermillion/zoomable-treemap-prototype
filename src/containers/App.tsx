@@ -35,25 +35,26 @@ export default class App extends React.PureComponent<{}, AppState> {
     this.setState({ data: App.stratifyData(data) });
   }
 
+  renderView(data) {
+    return (
+      <section style={{ flex: '1 1 auto' }}>
+        <ResponsiveContainer>
+          <ResponsiveSVG>
+            <TreemapView data={data} />
+          </ResponsiveSVG>
+        </ResponsiveContainer>
+        <DropShadowDefs id="dropshadow" />
+      </section>
+    );
+  }
+
   render() {
     const { data } = this.state;
+
     return (
       data
-        ? (
-          <section
-            style={{ height: '100%', flex: '1 1 auto' }}
-          >
-
-            <ResponsiveContainer>
-              <ResponsiveSVG>
-                <TreemapView data={data} />
-              </ResponsiveSVG>
-            </ResponsiveContainer>
-
-            <DropShadowDefs id="dropshadow" />
-          </section>
-        )
-        : <LoadingIndicator />
+      ? this.renderView(data)
+      : <LoadingIndicator />
     );
   }
 }
