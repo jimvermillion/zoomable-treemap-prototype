@@ -37,7 +37,7 @@ export default class App extends React.PureComponent<{}, AppState> {
 
   renderView(data) {
     return (
-      <section style={{ flex: '1 1 auto' }}>
+      <section>
         <ResponsiveContainer>
           <ResponsiveSVG>
             <TreemapView data={data} />
