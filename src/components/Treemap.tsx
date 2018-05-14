@@ -170,15 +170,11 @@ export default class Treemap extends React.Component<
 
     const layout = this.getLayout();
 
-    // Data Processing
     const processedData = layout(this.props.data)
       .descendants()
-      .filter(({ depth }) => depth < this.props.showToDepth);
+      .filter(({ depth }) => depth <= this.props.showToDepth);
 
-    const {
-      xScale,
-      yScale,
-    } = Treemap.getScales(
+    const scales = Treemap.getScales(
       props,
       props.rootNodeId,
       { xScale: scaleLinear(), yScale: scaleLinear() },
@@ -187,8 +183,7 @@ export default class Treemap extends React.Component<
     this.state = {
       layout,
       processedData,
-      xScale,
-      yScale,
+      ...scales,
     };
   }
 
@@ -197,23 +192,18 @@ export default class Treemap extends React.Component<
   }
 
   componentWillReceiveProps(nexProps) {
-    const layout = this.state.layout.size([nexProps.width, nexProps.height]);
+    const layout = this.getLayout().size([nexProps.width, nexProps.height]);
 
-    // Data Processing
     const processedData = layout(nexProps.data)
       .descendants()
-      .filter(({ depth }) => depth < nexProps.showToDepth);
+      .filter(({ depth }) => depth <= nexProps.showToDepth);
 
-    const {
-      xScale,
-      yScale,
-    } = Treemap.getScales(nexProps, nexProps.rootNodeId, this.state);
+    const scales = Treemap.getScales(nexProps, nexProps.rootNodeId, this.state);
 
     this.setState({
       layout,
       processedData,
-      xScale,
-      yScale,
+      ...scales,
     });
   }
 
@@ -232,6 +222,11 @@ export default class Treemap extends React.Component<
   }
 
   getLayout = () => {
+    // If an initial layout was already made, use state.
+    if (this.state) {
+      return this.state.layout;
+    }
+
     const {
       layoutOptions: {
         padding,
