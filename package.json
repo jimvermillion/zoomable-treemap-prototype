@@ -7,7 +7,7 @@
     "build:prod": "$(npm bin)/webpack --config webpack.prod.js",
     "build:dev": "$(npm bin)/webpack --config webpack.dev.js",
     "build:watch": "npm run build:dev -- -w",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "$(npm bin)/tslint -c ./tslint.json -p tsconfig.json"
   },
   "repository": {
     "type": "git",
@@ -30,6 +30,7 @@
     "d3": "~5.1.0",
     "ihme-ui": "^0.29.4",
     "jquery": "~3.3.1",
+    "lodash-es": "^4.17.10",
     "react": "^16.3.2",
     "react-dom": "^16.3.2",
     "tslint": "~5.9.1",

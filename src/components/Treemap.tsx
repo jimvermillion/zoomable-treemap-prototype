@@ -1,16 +1,20 @@
+import { max } from 'd3-array';
 import {
   treemap,
   treemapResquarify,
-} from 'd3';
-import { max } from 'd3-array';
+} from 'd3-hierarchy';
+import noop from 'lodash-es/noop';
 import React from 'react';
+
+import Rectangle from './Rectangle';
 
 import { stringWidth } from '../utils';
 
+// Constants
+const DOUBLE_CLICK_TIMING = 250;
 const FONT_SIZE_DEFAULT = 12;
 const FONT_PADDING_DEFAULT = 8;
-
-// Eventually handle dynamically with reference to space available
+const FONT_MARGIN_DEFAULT = 3;
 
 interface TreemapFieldAccessors {
   label: string;
@@ -25,15 +29,22 @@ interface LayoutOptions {
 interface TreemapProps {
   colorScale: (input: number | string) => string;
   data: any;
+  defsUrl?: string;
   fieldAccessors: TreemapFieldAccessors;
+  fontSize: number[];
   height: number;
+  layoutOptions: LayoutOptions;
+  onClick?: (...args: any[]) => void;
+  onDoubleClick?: (...args: any[]) => void;
+  onMouseLeave?: (...args: any[]) => void;
+  onMouseMove?: (...args: any[]) => void;
+  onMouseOver?: (...args: any[]) => void;
   showToDepth: number;
   stroke: string;
   strokeWidth: number | string;
-  layoutOptions: LayoutOptions;
-  textDropshadow: string;
   width: number;
-  fontSize: any;
+  xScale: (num: number) => number;
+  yScale: (num: number) => number;
 }
 
 interface TreemapState {
@@ -50,14 +61,38 @@ export default class Treemap extends React.Component<
       round: true,
       tile: treemapResquarify,
     },
+    onClick: noop,
+    onMouseOver: noop,
+    onMouseLeave: noop,
+    onMouseMove: noop,
     showToDepth: 1,
     stroke: '#fff',
     strokeWidth: 1,
   };
 
+  clickTimeout: any;
+
   constructor(props) {
     super(props);
     this.state = { layout: this.getLayout() };
+  }
+
+  componentDidMount() {
+    this.clickTimeout = null;
+  }
+
+  handleClicks = (event, data, component) => {
+    if (this.clickTimeout !== null) {
+      this.props.onDoubleClick(event, data, component);
+      clearTimeout(this.clickTimeout);
+      this.clickTimeout = null;
+    } else {
+      this.clickTimeout = setTimeout(() => {
+        this.props.onClick(event, data, component);
+        clearTimeout(this.clickTimeout);
+        this.clickTimeout = null;
+      }, DOUBLE_CLICK_TIMING);
+    }
   }
 
   getLayout = () => {
@@ -77,17 +112,6 @@ export default class Treemap extends React.Component<
       .size([width, height])
       .padding(padding);
   }
-
-  renderRect = d => ((
-    <rect
-      key={`rect-${d.id}`}
-      fill={this.props.colorScale(d.data.type)}
-      strokeWidth={this.props.strokeWidth}
-      stroke={this.props.stroke}
-      width={d.x1 - d.x0}
-      height={d.y1 - d.y0}
-    />
-  ))
 
   sizingProperties = d => {
     const [minValue, maxValue] = this.props.fontSize;
@@ -134,10 +158,39 @@ export default class Treemap extends React.Component<
   fontDirection = d => {
     const { direction } = this.sizingProperties(d);
     const orientation = {
-      leftRight: `translate(3px, ${this.fontSize(d)}px) rotate(0)`,
-      topBottom: `translate(${this.fontSize(d) / 3}px, 3px) rotate(90deg)`,
+      leftRight: `translate(${FONT_MARGIN_DEFAULT}px, ${this.fontSize(d)}px) rotate(0)`,
+      topBottom: `translate(${this.fontSize(d) / FONT_MARGIN_DEFAULT}px, ${FONT_MARGIN_DEFAULT}px) rotate(90deg)`,
     };
     return (direction === 'leftRight') ? orientation.leftRight : orientation.topBottom;
+  }
+
+  renderRect = d => {
+    const {
+      colorScale,
+      onMouseMove,
+      onMouseLeave,
+      onMouseOver,
+      stroke,
+      strokeWidth,
+      xScale,
+      yScale,
+    } = this.props;
+
+    return (
+      <Rectangle
+        data={d}
+        key={`rect-${d.id}`}
+        fill={colorScale(d.data.type)}
+        strokeWidth={strokeWidth}
+        stroke={stroke}
+        width={xScale(d.x1) - xScale(d.x0)}
+        height={yScale(d.y1) - yScale(d.y0)}
+        onClick={this.handleClicks}
+        onMouseOver={onMouseOver}
+        onMouseLeave={onMouseLeave}
+        onMouseMove={onMouseMove}
+      />
+    );
   }
 
   renderText = (d, dropshadow = '') => ((
@@ -154,16 +207,24 @@ export default class Treemap extends React.Component<
     </text>
   ))
 
-  renderCell = d => ((
-    <g
-      key={`cell-${d.id}`}
-      style={{ transform: `translate(${d.x0}px, ${d.y0}px)` }}
-    >
-      {this.renderRect(d)}
-      {this.props.textDropshadow && this.renderText(d, this.props.textDropshadow)}
-      {this.renderText(d)}
-    </g>
-  ))
+  renderCell = d => {
+    const {
+      defsUrl,
+      xScale,
+      yScale,
+    } = this.props;
+
+    return (
+      <g
+        key={`cell-${d.id}`}
+        style={{transform: `translate(${xScale(d.x0)}px, ${yScale(d.y0)}px)`}}
+      >
+        {this.renderRect(d)}
+        {defsUrl && this.renderText(d, defsUrl)}
+        {this.renderText(d)}
+      </g>
+    );
+  }
 
   render() {
     const {
@@ -174,7 +235,7 @@ export default class Treemap extends React.Component<
     // Data Processing
     const layout = this.state.layout(data)
       .descendants()
-      .filter(({ depth }) => depth < showToDepth);
+      .filter(({ depth }) => depth <= showToDepth);
 
     return (
       <g>

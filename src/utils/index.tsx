@@ -1,4 +1,1 @@
-import { stringWidth } from "./string-width";
-export {
-    stringWidth,
-};
+export * from "./string-width";

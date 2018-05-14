@@ -1,10 +1,13 @@
+import { json } from 'd3-fetch';
 import {
-  json,
-  scaleOrdinal,
-  schemeCategory10,
   stratify,
   treemapResquarify,
-} from 'd3';
+} from 'd3-hierarchy';
+import {
+  scaleLinear,
+  scaleOrdinal,
+} from 'd3-scale';
+import { schemeCategory10 } from 'd3-scale-chromatic';
 import { LoadingIndicator } from 'ihme-ui/es';
 import React from 'react';
 
@@ -20,6 +23,9 @@ function stratifyData(data) {
 
 interface TreemapViewState {
   data: any[] | null;
+  showToDepth: number;
+  xScale: any;
+  yScale: any;
 }
 
 const svgProps = {
@@ -32,6 +38,9 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
     super(props);
     this.state = {
       data: null,
+      showToDepth: 0,
+      xScale: scaleLinear().domain([0, svgProps.width]).range([0, svgProps.width]),
+      yScale: scaleLinear().domain([0, svgProps.height]).range([0, svgProps.height]),
     };
   }
 
@@ -40,8 +49,54 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
     this.setState({ data: stratifyData(data) });
   }
 
+  updateScales = ({ x0, x1, y0, y1 }) => {
+    this.setState({
+      xScale: this.state.xScale.domain([x0, x1]),
+      yScale: this.state.yScale.domain([y0, y1]),
+    });
+  }
+
+  onDoubleClick = (_, data) => {
+    // tslint:disable-next-line:no-console
+    console.log('zoom out!', data);
+    if (data.depth > 0) {
+      this.setState({
+        showToDepth: data.depth - 1,
+      });
+    }
+
+    // Go to grandparent, parent, or self if cannot zoom out further.
+    const ancestor = (
+      // Use grand parent.
+      (data.parent && data.parent.parent)
+      // Use parent if no grand parent.
+      || data.parent
+      // Use self if there are no ancestors.
+      || data
+    );
+
+    this.updateScales(ancestor);
+  }
+
+  onClick = (_, data) => {
+    // tslint:disable-next-line:no-console
+    console.log('zoom in!', data);
+    this.updateScales(data);
+    if (data.height > 0) {
+      this.setState({
+        showToDepth: data.depth + 1,
+      });
+    }
+  }
+
   render() {
-    const { data } = this.state;
+    const {
+      data,
+      showToDepth,
+      xScale,
+      yScale,
+    } = this.state;
+
     return (
       !data
       ? <LoadingIndicator />
@@ -58,18 +113,22 @@ export default class TreemapView extends React.PureComponent<{}, TreemapViewStat
             colorScale={scaleOrdinal(schemeCategory10)}
             data={data}
             fieldAccessors={{ label: 'location_name' }}
-            showToDepth={1}
+            showToDepth={showToDepth}
             stroke={'#fff'}
-            strokeWidth={1}
+            strokeWidth={3}
             layoutOptions={{
               padding: 0,
               round: true,
               tile: treemapResquarify,
             }}
-            textDropshadow="url(#dropshadow)"
+            onClick={this.onClick}
+            onDoubleClick={this.onDoubleClick}
+            defsUrl="url(#dropshadow)"
             height={777}
             width={1000}
             fontSize={[10, 48]}
+            xScale={xScale}
+            yScale={yScale}
           />
         </svg>
       )
