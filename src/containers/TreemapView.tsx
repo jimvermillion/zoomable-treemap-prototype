@@ -1,8 +1,3 @@
-import { HierarchyRectangularNode } from 'd3-hierarchy';
-import {
-  ScaleLinear,
-  scaleLinear,
-} from 'd3-scale';
 import React from 'react';
 
 import Treemap from '../components/treemap';
@@ -10,100 +5,22 @@ import Treemap from '../components/treemap';
 interface TreemapViewProps {
   data: any;
   height?: number;
-  rootNode?: any;
+  rootNodeId?: number | string;
   width?: number;
 }
 
 interface TreemapViewState {
-  rootNode?: any;
+  rootNodeId?: number | string;
   showToDepth: number;
-  xScale: ScaleLinear<number, number>;
-  yScale: ScaleLinear<number, number>;
 }
 
 export default class TreemapView extends React.PureComponent<
   TreemapViewProps,
   TreemapViewState
 > {
-  static getDomainsFromNode = ({ x0, x1, y0, y1 }: HierarchyRectangularNode<any>) => ({
-    xDomain: [x0, x1],
-    yDomain: [y0, y1],
-  })
-
-  static getDomainRangeFromProps = ({ height, width }: Partial<TreemapViewProps>) => {
-    const x = [0, width];
-    const y = [0, height];
-
-    return {
-      xDomain: x,
-      xRange: x,
-      yDomain: y,
-      yRange: y,
-    };
-  }
-
-  static getDomainAndRange(props, rootNode) {
-    // Establish domain and range for `height` and `width`.
-    const domainAndRangeFromProps = TreemapView.getDomainRangeFromProps(props);
-
-    // Get domain and range for a root node if it exists.
-    const domainFromNode = rootNode ? TreemapView.getDomainsFromNode(rootNode) : {};
-
-    // Override height and width domain/range if root node is present.
-    return {
-      ...domainAndRangeFromProps,
-      ...domainFromNode,
-    };
-  }
-
-  static updateScales = ({
-    xDomain,
-    xRange,
-    yDomain,
-    yRange,
-    xScale,
-    yScale,
-  }) => ({
-    xScale: xScale.domain(xDomain).range(xRange),
-    yScale: yScale.domain(yDomain).range(yRange),
-  })
-
-  static getScales(
-    props,
-    rootNode,
-    { xScale, yScale },
-  ) {
-    // Determine domain and range for x and y.
-    const domainAndRange = TreemapView.getDomainAndRange(props, rootNode);
-
-    // Return object with xScale, yScale properties.
-    return TreemapView.updateScales({
-      ...domainAndRange,
-      xScale,
-      yScale,
-    });
-  }
-
   constructor(props) {
     super(props);
-
-    const { xScale, yScale } = TreemapView.getScales(
-      props,
-      props.rootNode,
-      { xScale: scaleLinear(), yScale: scaleLinear() },
-    );
-
-    this.state = {
-      rootNode: props.rootNode,
-      showToDepth: 0,
-      xScale,
-      yScale,
-    };
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const scales = TreemapView.getScales(nextProps, this.state.rootNode, this.state);
-    this.setState(scales);
+    this.state = { showToDepth: 0 };
   }
 
   onDoubleClick = (_, data) => {
@@ -122,9 +39,8 @@ export default class TreemapView extends React.PureComponent<
 
     // Update state.
     this.setState({
-      rootNode: ancestor,
+      rootNodeId: ancestor.id,
       showToDepth,
-      ...TreemapView.getScales(this.props, ancestor, this.state),
     });
   }
 
@@ -134,9 +50,8 @@ export default class TreemapView extends React.PureComponent<
 
     // Update state.
     this.setState({
-      rootNode: data,
+      rootNodeId: data.id,
       showToDepth,
-      ...TreemapView.getScales(this.props, data, this.state),
     });
   }
 
@@ -148,22 +63,19 @@ export default class TreemapView extends React.PureComponent<
     } = this.props;
 
     const {
+      rootNodeId,
       showToDepth,
-      xScale,
-      yScale,
     } = this.state;
 
     return (
       <Treemap
         data={data}
-        rootNodeId={this.state.rootNode && this.state.rootNode.id}
+        rootNodeId={rootNodeId}
         fieldAccessors={{ label: 'location_name' }}
         showToDepth={showToDepth}
         onClick={this.onClick}
         onDoubleClick={this.onDoubleClick}
         defsUrl="url(#dropshadow)"
-        xScale={xScale}
-        yScale={yScale}
         height={height}
         width={width}
       />
