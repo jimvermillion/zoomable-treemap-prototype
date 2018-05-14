@@ -7,8 +7,6 @@ import React from 'react';
 
 import Treemap from '../components/treemap';
 
-const DEFAULT_SCALE = scaleLinear();
-
 interface TreemapViewProps {
   data: any;
   height?: number;
@@ -92,7 +90,7 @@ export default class TreemapView extends React.PureComponent<
     const { xScale, yScale } = TreemapView.getScales(
       props,
       props.rootNode,
-      { xScale: DEFAULT_SCALE, yScale: DEFAULT_SCALE },
+      { xScale: scaleLinear(), yScale: scaleLinear() },
     );
 
     this.state = {
@@ -104,15 +102,13 @@ export default class TreemapView extends React.PureComponent<
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState(TreemapView.getScales(nextProps, this.state.rootNode, this.state));
+    const scales = TreemapView.getScales(nextProps, this.state.rootNode, this.state);
+    this.setState(scales);
   }
 
   onDoubleClick = (_, data) => {
-    if (data.depth > 0) {
-      this.setState({
-        showToDepth: data.depth - 1,
-      });
-    }
+    // Get zoom-out `depth`
+    const showToDepth = data.depth > 0 ? data.depth - 1 : this.state.showToDepth;
 
     // Go to grandparent, parent, or self if cannot zoom out further.
     const ancestor = (
@@ -124,35 +120,24 @@ export default class TreemapView extends React.PureComponent<
       || data
     );
 
+    // Update state.
     this.setState({
       rootNode: ancestor,
+      showToDepth,
       ...TreemapView.getScales(this.props, ancestor, this.state),
     });
   }
 
   onClick = (_, data) => {
-    // tslint:disable-next-line:no-console
-    console.log('zoom in!', data);
+    // Get zoom-in `depth`
+    const showToDepth = data.height > 0 ? data.depth + 1 : this.state.showToDepth;
 
-    const domainAndRange = TreemapView.getDomainAndRange(this.props, data);
-
-    const { xScale, yScale } = TreemapView.updateScales({
-      ...domainAndRange,
-      xScale: this.state.xScale,
-      yScale: this.state.yScale,
-    });
-
+    // Update state.
     this.setState({
       rootNode: data,
-      xScale,
-      yScale,
+      showToDepth,
+      ...TreemapView.getScales(this.props, data, this.state),
     });
-
-    if (data.height > 0) {
-      this.setState({
-        showToDepth: data.depth + 1,
-      });
-    }
   }
 
   render() {
@@ -167,9 +152,6 @@ export default class TreemapView extends React.PureComponent<
       xScale,
       yScale,
     } = this.state;
-
-    // tslint:disable-next-line:no-console
-    console.log('current zoom on', this.state.rootNode && this.state.rootNode.data && this.state.rootNode.data.location_name);
 
     return (
       <Treemap
