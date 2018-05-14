@@ -1,3 +1,4 @@
+import { HierarchyRectangularNode } from 'd3-hierarchy';
 import {
   ScaleLinear,
   scaleLinear,
@@ -20,13 +21,6 @@ interface TreemapViewState {
   yScale: ScaleLinear<number, number>;
 }
 
-interface RectangleDimension {
-  x0: number;
-  x1: number;
-  y0: number;
-  y1: number;
-}
-
 export default class TreemapView extends React.PureComponent<
   TreemapViewProps,
   TreemapViewState
@@ -37,7 +31,7 @@ export default class TreemapView extends React.PureComponent<
 
   static getScaleDimensions = (
     { height, width }: Partial<TreemapViewProps>,
-    { x0, x1, y0, y1 }: RectangleDimension,
+    { x0, x1, y0, y1 }: HierarchyRectangularNode<any>,
   ) => ({
     x0: x0 || 0,
     x1: x1 || width,
@@ -47,7 +41,7 @@ export default class TreemapView extends React.PureComponent<
 
   static getScales = (
     { height, width }: Partial<TreemapViewProps>,
-    { x0, x1, y0, y1 }: RectangleDimension,
+    { x0, x1, y0, y1 }: Partial<HierarchyRectangularNode<any>>,
     { xScale, yScale }: Partial<TreemapViewState>,
   ) => ({
     xScale: xScale.domain([x0, x1]).range([0, width]),

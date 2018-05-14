@@ -23,7 +23,7 @@ interface TreemapFieldAccessors {
 }
 
 interface LayoutOptions {
-  padding: number | number[];
+  padding: number;
   round: boolean;
   tile: any;
 }
