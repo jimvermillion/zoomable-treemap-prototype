@@ -55,6 +55,7 @@ interface TreemapProps {
 
 interface TreemapState {
   layout: any;
+  processedData: any;
   xScale: ScaleLinear<number, number>;
   yScale: ScaleLinear<number, number>;
 }
@@ -81,10 +82,12 @@ export default class Treemap extends React.Component<
   };
 
   static getNodeById(id, root) {
+    // If id matches root.id, we found the node.
     if (root.id === id) {
       return root;
     }
 
+    // Iterate over children
     if (root.children) {
       for (const child of root.children) {
         const nodeById = Treemap.getNodeById(id, child);
@@ -94,6 +97,7 @@ export default class Treemap extends React.Component<
       }
     }
 
+    // If not found, return null.
     return null;
   }
 
@@ -102,7 +106,7 @@ export default class Treemap extends React.Component<
     yDomain: [y0, y1],
   })
 
-  static getDomainRangeFromProps = ({ height, width }: Partial<TreemapProps>) => {
+  static getDomainsAndRangesFromProps = ({ height, width }: Partial<TreemapProps>) => {
     const x = [0, width];
     const y = [0, height];
 
@@ -116,7 +120,7 @@ export default class Treemap extends React.Component<
 
   static getDomainAndRange(props, rootNode) {
     // Establish domain and range for `height` and `width`.
-    const domainAndRangeFromProps = Treemap.getDomainRangeFromProps(props);
+    const domainAndRangeFromProps = Treemap.getDomainsAndRangesFromProps(props);
 
     // Get domain and range for a root node if it exists.
     const domainFromNode = rootNode ? Treemap.getDomainsFromNode(rootNode) : {};
@@ -164,14 +168,25 @@ export default class Treemap extends React.Component<
   constructor(props) {
     super(props);
 
-    const { xScale, yScale } = Treemap.getScales(
+    const layout = this.getLayout();
+
+    // Data Processing
+    const processedData = layout(this.props.data)
+      .descendants()
+      .filter(({ depth }) => depth < this.props.showToDepth);
+
+    const {
+      xScale,
+      yScale,
+    } = Treemap.getScales(
       props,
       props.rootNodeId,
       { xScale: scaleLinear(), yScale: scaleLinear() },
     );
 
     this.state = {
-      layout: this.getLayout(),
+      layout,
+      processedData,
       xScale,
       yScale,
     };
@@ -182,10 +197,21 @@ export default class Treemap extends React.Component<
   }
 
   componentWillReceiveProps(nexProps) {
-    const { xScale, yScale } = Treemap.getScales(nexProps, nexProps.rootNodeId, this.state);
+    const layout = this.state.layout.size([nexProps.width, nexProps.height]);
+
+    // Data Processing
+    const processedData = layout(nexProps.data)
+      .descendants()
+      .filter(({ depth }) => depth < nexProps.showToDepth);
+
+    const {
+      xScale,
+      yScale,
+    } = Treemap.getScales(nexProps, nexProps.rootNodeId, this.state);
 
     this.setState({
-      layout: this.state.layout.size([nexProps.width, nexProps.height]),
+      layout,
+      processedData,
       xScale,
       yScale,
     });
@@ -321,9 +347,7 @@ export default class Treemap extends React.Component<
   ))
 
   renderCell = d => {
-    const {
-      defsUrl,
-    } = this.props;
+    const { defsUrl } = this.props;
 
     const {
       xScale,
@@ -343,20 +367,6 @@ export default class Treemap extends React.Component<
   }
 
   render() {
-    const {
-      data,
-      showToDepth,
-    } = this.props;
-
-    // Data Processing
-    const processedData = this.state.layout(data)
-      .descendants()
-      .filter(({ depth }) => depth <= showToDepth);
-
-    return (
-      <g>
-        {processedData.map(this.renderCell)}
-      </g>
-    );
+    return <g>{this.state.processedData.map(this.renderCell)}</g>;
   }
 }
