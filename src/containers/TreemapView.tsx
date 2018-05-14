@@ -156,6 +156,7 @@ export default class TreemapView extends React.PureComponent<
     return (
       <Treemap
         data={data}
+        rootNodeId={this.state.rootNode && this.state.rootNode.id}
         fieldAccessors={{ label: 'location_name' }}
         showToDepth={showToDepth}
         onClick={this.onClick}

@@ -41,6 +41,7 @@ interface TreemapProps {
   onMouseLeave?: (...args: any[]) => void;
   onMouseMove?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
+  rootNodeId?: number;
   showToDepth: number;
   stroke?: string;
   strokeWidth?: number | string;
@@ -236,11 +237,35 @@ export default class Treemap extends React.Component<
     );
   }
 
+  getNodeById(id, root) {
+    if (root.id === id) {
+      return root;
+    }
+
+    if (root.children) {
+      for (const child of root.children) {
+        const nodeById = this.getNodeByIdz(id, child);
+        if (nodeById) {
+          return nodeById;
+        }
+      }
+    }
+
+    return null;
+  }
+
   render() {
     const {
       data,
       showToDepth,
+      rootNodeId,
     } = this.props;
+
+
+    if (rootNodeId) {
+      const node = this.getNodeById(rootNodeId, data);
+      console.log('root node by id', node, node.data.location_id);
+    }
 
     // Data Processing
     const layout = this.state.layout(data)
