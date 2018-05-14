@@ -19,9 +19,9 @@ interface AppState {
 export default class App extends React.PureComponent<{}, AppState> {
   static stratifyData(data) {
     return stratify()
-      .id(d => d.location_id)
-      .parentId(d => d.parent_location_id)(data)
-      .sum(d => d.value)
+      .id((d: any) => d.location_id)
+      .parentId((d: any) => d.parent_location_id)(data)
+      .sum((d: any) => d.value)
       .sort((a, b) =>  (b.height - a.height || b.value - a.value));
   }
 
