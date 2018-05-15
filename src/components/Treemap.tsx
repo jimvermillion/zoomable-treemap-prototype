@@ -1,8 +1,15 @@
 import { max } from 'd3-array';
 import {
+  HierarchyRectangularNode,
   treemap,
   treemapResquarify,
 } from 'd3-hierarchy';
+import {
+  ScaleLinear,
+  scaleLinear,
+  scaleOrdinal,
+} from 'd3-scale';
+import { schemeCategory10 } from 'd3-scale-chromatic';
 import noop from 'lodash-es/noop';
 import React from 'react';
 
@@ -21,34 +28,36 @@ interface TreemapFieldAccessors {
 }
 
 interface LayoutOptions {
-  padding: number | number[];
+  padding: number;
   round: boolean;
   tile: any;
 }
 
 interface TreemapProps {
-  colorScale: (input: number | string) => string;
+  colorScale?: (input: number | string) => string;
   data: any;
   defsUrl?: string;
   fieldAccessors: TreemapFieldAccessors;
-  fontSize: number[];
+  fontSize?: number[];
   height: number;
-  layoutOptions: LayoutOptions;
+  layoutOptions?: LayoutOptions;
   onClick?: (...args: any[]) => void;
   onDoubleClick?: (...args: any[]) => void;
   onMouseLeave?: (...args: any[]) => void;
   onMouseMove?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
+  rootNodeId?: number | string;
   showToDepth: number;
-  stroke: string;
-  strokeWidth: number | string;
+  stroke?: string;
+  strokeWidth?: number | string;
   width: number;
-  xScale: (num: number) => number;
-  yScale: (num: number) => number;
 }
 
 interface TreemapState {
   layout: any;
+  processedData: any;
+  xScale: ScaleLinear<number, number>;
+  yScale: ScaleLinear<number, number>;
 }
 
 export default class Treemap extends React.Component<
@@ -56,6 +65,8 @@ export default class Treemap extends React.Component<
   TreemapState
 > {
   static defaultProps: Partial<TreemapProps> = {
+    colorScale: scaleOrdinal(schemeCategory10),
+    fontSize: [10, 48],
     layoutOptions: {
       padding: 0,
       round: true,
@@ -67,35 +78,148 @@ export default class Treemap extends React.Component<
     onMouseMove: noop,
     showToDepth: 1,
     stroke: '#fff',
-    strokeWidth: 1,
+    strokeWidth: 3,
   };
+
+  /**
+   * Get full HierarchyRectangularNode by just its id.
+   */
+  static getNodeById(id, root) {
+    // If id matches root.id, we found the node.
+    if (root.id === id) {
+      return root;
+    }
+
+    // Iterate over children.
+    if (root.children) {
+      for (const child of root.children) {
+        const nodeById = Treemap.getNodeById(id, child);
+        if (nodeById) {
+          return nodeById;
+        }
+      }
+    }
+
+    // If not found:
+    return null;
+  }
+
+  /**
+   * Get x/y domain set by a HierarchyRectangularNode's properties.
+   */
+  static getDomainsFromNode = ({ x0, x1, y0, y1 }: HierarchyRectangularNode<any>) => ({
+    xDomain: [x0, x1],
+    yDomain: [y0, y1],
+  })
+
+  /**
+   * Get x/y domain and range set from props.
+   */
+  static getDomainsAndRangesFromProps = ({ height, width }: Partial<TreemapProps>) => {
+    const x = [0, width];
+    const y = [0, height];
+
+    return {
+      xDomain: x,
+      xRange: x,
+      yDomain: y,
+      yRange: y,
+    };
+  }
+
+  /**
+   * Get domain and range for x/y scales.
+   */
+  static getDomainsAndRanges(props, rootNode) {
+    // Establish domain and range for `height` and `width`.
+    const domainAndRangeFromProps = Treemap.getDomainsAndRangesFromProps(props);
+
+    // Get domain for a root node if it exists.
+    const domainFromNode = rootNode ? Treemap.getDomainsFromNode(rootNode) : {};
+
+    // Override height and width domain/range if root node if present.
+    return { ...domainAndRangeFromProps, ...domainFromNode };
+  }
+
+  /**
+   * Get current x/y scales.
+   */
+  static getScales(
+    props,
+    { xScale, yScale },
+  ) {
+    // Get root node that has been isolated.
+    const node = Treemap.getNodeById(props.rootNodeId, props.data);
+
+    // Determine domain and range for x and y.
+    const {
+      xDomain,
+      xRange,
+      yDomain,
+      yRange,
+    } = Treemap.getDomainsAndRanges(props, node);
+
+    // Return object with xScale, yScale properties.
+    return {
+      xScale: xScale.domain(xDomain).range(xRange),
+      yScale: yScale.domain(yDomain).range(yRange),
+    };
+  }
 
   clickTimeout: any;
 
   constructor(props) {
     super(props);
-    this.state = { layout: this.getLayout() };
+
+    // Get the `treemap` layout.
+    const layout = this.getLayout();
+
+    // Process data through the layout.
+    const processedData = layout(this.props.data)
+      .descendants()
+      .filter(({ depth }) => depth <= this.props.showToDepth);
+
+    // Get initial x/y scales.
+    const scales = Treemap.getScales(props, { xScale: scaleLinear(), yScale: scaleLinear() });
+
+    // Initialize state with layout, data, and scales.
+    this.state = {
+      layout,
+      processedData,
+      ...scales,
+    };
   }
 
   componentDidMount() {
     this.clickTimeout = null;
   }
 
-  handleClicks = (event, data, component) => {
-    if (this.clickTimeout !== null) {
-      this.props.onDoubleClick(event, data, component);
-      clearTimeout(this.clickTimeout);
-      this.clickTimeout = null;
-    } else {
-      this.clickTimeout = setTimeout(() => {
-        this.props.onClick(event, data, component);
-        clearTimeout(this.clickTimeout);
-        this.clickTimeout = null;
-      }, DOUBLE_CLICK_TIMING);
-    }
+  componentWillReceiveProps(nextProps) {
+    // Get the `treemap` layout, update its `size`.
+    const layout = this.getLayout().size([nextProps.width, nextProps.height]);
+
+    // Process data through the layout.
+    const processedData = layout(nextProps.data)
+      .descendants()
+      .filter(({ depth }) => depth <= nextProps.showToDepth);
+
+    // Get next x/y scales.
+    const scales = Treemap.getScales(nextProps, this.state);
+
+    // Set state with updated layout, data, and scales.
+    this.setState({
+      layout,
+      processedData,
+      ...scales,
+    });
   }
 
   getLayout = () => {
+    // If an initial layout was already made, return it.
+    if (this.state) {
+      return this.state.layout;
+    }
+
     const {
       layoutOptions: {
         padding,
@@ -111,6 +235,20 @@ export default class Treemap extends React.Component<
       .round(round)
       .size([width, height])
       .padding(padding);
+  }
+
+  handleClicks = (event, data, component) => {
+    if (this.clickTimeout !== null) {
+      this.props.onDoubleClick(event, data, component);
+      clearTimeout(this.clickTimeout);
+      this.clickTimeout = null;
+    } else {
+      this.clickTimeout = setTimeout(() => {
+        this.props.onClick(event, data, component);
+        clearTimeout(this.clickTimeout);
+        this.clickTimeout = null;
+      }, DOUBLE_CLICK_TIMING);
+    }
   }
 
   sizingProperties = d => {
@@ -172,9 +310,12 @@ export default class Treemap extends React.Component<
       onMouseOver,
       stroke,
       strokeWidth,
+    } = this.props;
+
+    const {
       xScale,
       yScale,
-    } = this.props;
+    } = this.state;
 
     return (
       <Rectangle
@@ -208,11 +349,12 @@ export default class Treemap extends React.Component<
   ))
 
   renderCell = d => {
+    const { defsUrl } = this.props;
+
     const {
-      defsUrl,
       xScale,
       yScale,
-    } = this.props;
+    } = this.state;
 
     return (
       <g
@@ -227,20 +369,6 @@ export default class Treemap extends React.Component<
   }
 
   render() {
-    const {
-      data,
-      showToDepth,
-    } = this.props;
-
-    // Data Processing
-    const layout = this.state.layout(data)
-      .descendants()
-      .filter(({ depth }) => depth <= showToDepth);
-
-    return (
-      <g>
-        {layout.map(this.renderCell)}
-      </g>
-    );
+    return <g>{this.state.processedData.map(this.renderCell)}</g>;
   }
 }

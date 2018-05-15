@@ -1,137 +1,98 @@
-import { json } from 'd3-fetch';
-import {
-  stratify,
-  treemapResquarify,
-} from 'd3-hierarchy';
-import {
-  scaleLinear,
-  scaleOrdinal,
-} from 'd3-scale';
-import { schemeCategory10 } from 'd3-scale-chromatic';
-import { LoadingIndicator } from 'ihme-ui/es';
 import React from 'react';
 
 import Treemap from '../components/treemap';
 
-function stratifyData(data) {
-  return stratify()
-    .id(d => d.location_id)
-    .parentId(d => d.parent_location_id)(data)
-    .sum(d => d.value)
-    .sort((a, b) =>  (b.height - a.height || b.value - a.value));
+interface TreemapViewProps {
+  data: any;
+  height?: number;
+  rootNodeId?: number | string;
+  width?: number;
 }
 
 interface TreemapViewState {
-  data: any[] | null;
+  rootNodeId?: number | string;
   showToDepth: number;
-  xScale: any;
-  yScale: any;
 }
 
-const svgProps = {
-  width: 1000,
-  height: 777,
-};
-
-export default class TreemapView extends React.PureComponent<{}, TreemapViewState> {
+export default class TreemapView extends React.PureComponent<
+  TreemapViewProps,
+  TreemapViewState
+> {
   constructor(props) {
     super(props);
-    this.state = {
-      data: null,
-      showToDepth: 0,
-      xScale: scaleLinear().domain([0, svgProps.width]).range([0, svgProps.width]),
-      yScale: scaleLinear().domain([0, svgProps.height]).range([0, svgProps.height]),
-    };
+    this.state = { showToDepth: 0 };
   }
 
-  async componentDidMount() {
-    const data = await json('resources/mock_populations.json');
-    this.setState({ data: stratifyData(data) });
-  }
+  zoomOut = (_, node) => {
+    // Get zoom-out `depth`
+    const showToDepth = (
+      // If node is deeper than the root:
+      node.depth > 0
+      // Ascend 1 in the `depth` tree.
+      ? node.depth - 1
+      // Otherwise, use current depth.
+      : this.state.showToDepth
+    );
 
-  updateScales = ({ x0, x1, y0, y1 }) => {
+    // Go to grandparent, parent, or self if cannot zoom out further.
+    const { id: rootNodeId } = (
+      // Use grand parent.
+      (node.parent && node.parent.parent)
+      // Use parent if no grand parent.
+      || node.parent
+      // Use self if there are no ancestors.
+      || node
+    );
+
+    // Update state.
     this.setState({
-      xScale: this.state.xScale.domain([x0, x1]),
-      yScale: this.state.yScale.domain([y0, y1]),
+      rootNodeId,
+      showToDepth,
     });
   }
 
-  onDoubleClick = (_, data) => {
-    // tslint:disable-next-line:no-console
-    console.log('zoom out!', data);
-    if (data.depth > 0) {
-      this.setState({
-        showToDepth: data.depth - 1,
-      });
-    }
-
-    // Go to grandparent, parent, or self if cannot zoom out further.
-    const ancestor = (
-      // Use grand parent.
-      (data.parent && data.parent.parent)
-      // Use parent if no grand parent.
-      || data.parent
-      // Use self if there are no ancestors.
-      || data
+  zoomIn = (_, node) => {
+    // Get zoom-in `depth`
+    const showToDepth = (
+      // If height has room to zoom (0).
+      node.height > 0
+      // Descend 1 in the `depth` tree.
+      ? node.depth + 1
+      // Otherwise, use current depth.
+      : this.state.showToDepth
     );
 
-    this.updateScales(ancestor);
-  }
-
-  onClick = (_, data) => {
-    // tslint:disable-next-line:no-console
-    console.log('zoom in!', data);
-    this.updateScales(data);
-    if (data.height > 0) {
-      this.setState({
-        showToDepth: data.depth + 1,
-      });
-    }
+    // Update state.
+    this.setState({
+      rootNodeId: node.id,
+      showToDepth,
+    });
   }
 
   render() {
     const {
       data,
+      height,
+      width,
+    } = this.props;
+
+    const {
+      rootNodeId,
       showToDepth,
-      xScale,
-      yScale,
     } = this.state;
 
     return (
-      !data
-      ? <LoadingIndicator />
-      : (
-        <svg {...svgProps}>
-          // rip off from Evan's code.
-          <defs>
-            <filter id="dropshadow" width="120%" height="120%">
-              <feGaussianBlur stdDeviation="2" result="shadow"></feGaussianBlur>
-              <feOffset dx="1" dy="1"></feOffset>
-            </filter>
-          </defs>
-          <Treemap
-            colorScale={scaleOrdinal(schemeCategory10)}
-            data={data}
-            fieldAccessors={{ label: 'location_name' }}
-            showToDepth={showToDepth}
-            stroke={'#fff'}
-            strokeWidth={3}
-            layoutOptions={{
-              padding: 0,
-              round: true,
-              tile: treemapResquarify,
-            }}
-            onClick={this.onClick}
-            onDoubleClick={this.onDoubleClick}
-            defsUrl="url(#dropshadow)"
-            height={777}
-            width={1000}
-            fontSize={[10, 48]}
-            xScale={xScale}
-            yScale={yScale}
-          />
-        </svg>
-      )
+      <Treemap
+        data={data}
+        rootNodeId={rootNodeId}
+        fieldAccessors={{ label: 'location_name' }}
+        showToDepth={showToDepth}
+        onClick={this.zoomIn}
+        onDoubleClick={this.zoomOut}
+        defsUrl="url(#dropshadow)"
+        height={height}
+        width={width}
+      />
     );
   }
 }
