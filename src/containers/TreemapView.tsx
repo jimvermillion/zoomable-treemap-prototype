@@ -23,34 +23,48 @@ export default class TreemapView extends React.PureComponent<
     this.state = { showToDepth: 0 };
   }
 
-  onDoubleClick = (_, data) => {
+  zoomOut = (_, node) => {
     // Get zoom-out `depth`
-    const showToDepth = data.depth > 0 ? data.depth - 1 : this.state.showToDepth;
+    const showToDepth = (
+      // If node is deeper than the root:
+      node.depth > 0
+      // Ascend 1 in the `depth` tree.
+      ? node.depth - 1
+      // Otherwise, use current depth.
+      : this.state.showToDepth
+    );
 
     // Go to grandparent, parent, or self if cannot zoom out further.
-    const ancestor = (
+    const { id: rootNodeId } = (
       // Use grand parent.
-      (data.parent && data.parent.parent)
+      (node.parent && node.parent.parent)
       // Use parent if no grand parent.
-      || data.parent
+      || node.parent
       // Use self if there are no ancestors.
-      || data
+      || node
     );
 
     // Update state.
     this.setState({
-      rootNodeId: ancestor.id,
+      rootNodeId,
       showToDepth,
     });
   }
 
-  onClick = (_, data) => {
+  zoomIn = (_, node) => {
     // Get zoom-in `depth`
-    const showToDepth = data.height > 0 ? data.depth + 1 : this.state.showToDepth;
+    const showToDepth = (
+      // If height has room to zoom (0).
+      node.height > 0
+      // Descend 1 in the `depth` tree.
+      ? node.depth + 1
+      // Otherwise, use current depth.
+      : this.state.showToDepth
+    );
 
     // Update state.
     this.setState({
-      rootNodeId: data.id,
+      rootNodeId: node.id,
       showToDepth,
     });
   }
@@ -73,8 +87,8 @@ export default class TreemapView extends React.PureComponent<
         rootNodeId={rootNodeId}
         fieldAccessors={{ label: 'location_name' }}
         showToDepth={showToDepth}
-        onClick={this.onClick}
-        onDoubleClick={this.onDoubleClick}
+        onClick={this.zoomIn}
+        onDoubleClick={this.zoomOut}
         defsUrl="url(#dropshadow)"
         height={height}
         width={width}

@@ -81,13 +81,16 @@ export default class Treemap extends React.Component<
     strokeWidth: 3,
   };
 
+  /**
+   * Get full HierarchyRectangularNode by just its id.
+   */
   static getNodeById(id, root) {
     // If id matches root.id, we found the node.
     if (root.id === id) {
       return root;
     }
 
-    // Iterate over children
+    // Iterate over children.
     if (root.children) {
       for (const child of root.children) {
         const nodeById = Treemap.getNodeById(id, child);
@@ -97,15 +100,21 @@ export default class Treemap extends React.Component<
       }
     }
 
-    // If not found, return null.
+    // If not found:
     return null;
   }
 
+  /**
+   * Get x/y domain set by a HierarchyRectangularNode's properties.
+   */
   static getDomainsFromNode = ({ x0, x1, y0, y1 }: HierarchyRectangularNode<any>) => ({
     xDomain: [x0, x1],
     yDomain: [y0, y1],
   })
 
+  /**
+   * Get x/y domain and range set from props.
+   */
   static getDomainsAndRangesFromProps = ({ height, width }: Partial<TreemapProps>) => {
     const x = [0, width];
     const y = [0, height];
@@ -118,49 +127,43 @@ export default class Treemap extends React.Component<
     };
   }
 
-  static getDomainAndRange(props, rootNode) {
+  /**
+   * Get domain and range for x/y scales.
+   */
+  static getDomainsAndRanges(props, rootNode) {
     // Establish domain and range for `height` and `width`.
     const domainAndRangeFromProps = Treemap.getDomainsAndRangesFromProps(props);
 
-    // Get domain and range for a root node if it exists.
+    // Get domain for a root node if it exists.
     const domainFromNode = rootNode ? Treemap.getDomainsFromNode(rootNode) : {};
 
-    // Override height and width domain/range if root node is present.
-    return {
-      ...domainAndRangeFromProps,
-      ...domainFromNode,
-    };
+    // Override height and width domain/range if root node if present.
+    return { ...domainAndRangeFromProps, ...domainFromNode };
   }
 
-  static updateScales = ({
-    xDomain,
-    xRange,
-    yDomain,
-    yRange,
-    xScale,
-    yScale,
-  }) => ({
-    xScale: xScale.domain(xDomain).range(xRange),
-    yScale: yScale.domain(yDomain).range(yRange),
-  })
-
+  /**
+   * Get current x/y scales.
+   */
   static getScales(
     props,
-    rootNodeId,
     { xScale, yScale },
   ) {
     // Get root node that has been isolated.
-    const node = Treemap.getNodeById(rootNodeId, props.data);
+    const node = Treemap.getNodeById(props.rootNodeId, props.data);
 
     // Determine domain and range for x and y.
-    const domainAndRange = Treemap.getDomainAndRange(props, node);
+    const {
+      xDomain,
+      xRange,
+      yDomain,
+      yRange,
+    } = Treemap.getDomainsAndRanges(props, node);
 
     // Return object with xScale, yScale properties.
-    return Treemap.updateScales({
-      ...domainAndRange,
-      xScale,
-      yScale,
-    });
+    return {
+      xScale: xScale.domain(xDomain).range(xRange),
+      yScale: yScale.domain(yDomain).range(yRange),
+    };
   }
 
   clickTimeout: any;
@@ -168,18 +171,18 @@ export default class Treemap extends React.Component<
   constructor(props) {
     super(props);
 
+    // Get the `treemap` layout.
     const layout = this.getLayout();
 
+    // Process data through the layout.
     const processedData = layout(this.props.data)
       .descendants()
       .filter(({ depth }) => depth <= this.props.showToDepth);
 
-    const scales = Treemap.getScales(
-      props,
-      props.rootNodeId,
-      { xScale: scaleLinear(), yScale: scaleLinear() },
-    );
+    // Get initial x/y scales.
+    const scales = Treemap.getScales(props, { xScale: scaleLinear(), yScale: scaleLinear() });
 
+    // Initialize state with layout, data, and scales.
     this.state = {
       layout,
       processedData,
@@ -191,15 +194,19 @@ export default class Treemap extends React.Component<
     this.clickTimeout = null;
   }
 
-  componentWillReceiveProps(nexProps) {
-    const layout = this.getLayout().size([nexProps.width, nexProps.height]);
+  componentWillReceiveProps(nextProps) {
+    // Get the `treemap` layout, update its `size`.
+    const layout = this.getLayout().size([nextProps.width, nextProps.height]);
 
-    const processedData = layout(nexProps.data)
+    // Process data through the layout.
+    const processedData = layout(nextProps.data)
       .descendants()
-      .filter(({ depth }) => depth <= nexProps.showToDepth);
+      .filter(({ depth }) => depth <= nextProps.showToDepth);
 
-    const scales = Treemap.getScales(nexProps, nexProps.rootNodeId, this.state);
+    // Get next x/y scales.
+    const scales = Treemap.getScales(nextProps, this.state);
 
+    // Set state with updated layout, data, and scales.
     this.setState({
       layout,
       processedData,
@@ -207,22 +214,8 @@ export default class Treemap extends React.Component<
     });
   }
 
-  handleClicks = (event, data, component) => {
-    if (this.clickTimeout !== null) {
-      this.props.onDoubleClick(event, data, component);
-      clearTimeout(this.clickTimeout);
-      this.clickTimeout = null;
-    } else {
-      this.clickTimeout = setTimeout(() => {
-        this.props.onClick(event, data, component);
-        clearTimeout(this.clickTimeout);
-        this.clickTimeout = null;
-      }, DOUBLE_CLICK_TIMING);
-    }
-  }
-
   getLayout = () => {
-    // If an initial layout was already made, use state.
+    // If an initial layout was already made, return it.
     if (this.state) {
       return this.state.layout;
     }
@@ -242,6 +235,20 @@ export default class Treemap extends React.Component<
       .round(round)
       .size([width, height])
       .padding(padding);
+  }
+
+  handleClicks = (event, data, component) => {
+    if (this.clickTimeout !== null) {
+      this.props.onDoubleClick(event, data, component);
+      clearTimeout(this.clickTimeout);
+      this.clickTimeout = null;
+    } else {
+      this.clickTimeout = setTimeout(() => {
+        this.props.onClick(event, data, component);
+        clearTimeout(this.clickTimeout);
+        this.clickTimeout = null;
+      }, DOUBLE_CLICK_TIMING);
+    }
   }
 
   sizingProperties = d => {
