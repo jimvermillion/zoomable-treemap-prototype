@@ -22,9 +22,16 @@ const DOUBLE_CLICK_TIMING = 250;
 const FONT_SIZE_DEFAULT = 12;
 const FONT_PADDING_DEFAULT = 8;
 const FONT_MARGIN_DEFAULT = 3;
+const ATTRIBUTION_OPACITY = 0.5;
+
+interface AttributionFieldAccessors {
+  name: string;
+  fill?: string;
+}
 
 interface TreemapFieldAccessors {
   label: string;
+  attribution?: AttributionFieldAccessors;
 }
 
 interface LayoutOptions {
@@ -334,6 +341,50 @@ export default class Treemap extends React.Component<
     );
   }
 
+  attrWidth = ({ data, x1, x0 }) => {
+    const {
+      xScale,
+    } = this.state;
+    const {
+      fieldAccessors: { attribution: { name: attributionName } },
+    } = this.props;
+    if (data[attributionName]) {
+      const {value} = data[attributionName];
+      const cellWidth = xScale(x1) - xScale(x0);
+      return (cellWidth * value);
+    }
+    return 0;
+  }
+
+  renderAttribution = d => {
+    const {
+      onMouseMove,
+      onMouseLeave,
+      onMouseOver,
+      strokeWidth,
+      fieldAccessors: { attribution: { name: attributionName, fill: attributionFill } },
+    } = this.props;
+    const {
+      yScale,
+    } = this.state;
+    const fill = d.data[attributionName] && d.data[attributionName][attributionFill];
+    const transformBy = Number(strokeWidth) / 2;
+    return (
+      <Rectangle
+        opacity={ATTRIBUTION_OPACITY}
+        transform={`translate(${transformBy}, ${transformBy})`}
+        data={d}
+        key={`attr-${d.id}`}
+        fill={fill}
+        width={this.attrWidth(d) - Number(strokeWidth)}
+        height={yScale(d.y1) - yScale(d.y0) - Number(strokeWidth)}
+        onClick={this.handleClicks}
+        onMouseOver={onMouseOver}
+        onMouseLeave={onMouseLeave}
+        onMouseMove={onMouseMove}
+      />
+    );
+  }
   renderText = (d, dropshadow = '') => ((
     <text
       fill={dropshadow ? '#000' : '#fff'}
@@ -347,27 +398,27 @@ export default class Treemap extends React.Component<
       {d.data[this.props.fieldAccessors.label]}
     </text>
   ))
-
   renderCell = d => {
-    const { defsUrl } = this.props;
-
+    const {
+      defsUrl,
+      fieldAccessors: { attribution: { name: attributionName } },
+    } = this.props;
     const {
       xScale,
       yScale,
     } = this.state;
-
     return (
       <g
         key={`cell-${d.id}`}
         style={{transform: `translate(${xScale(d.x0)}px, ${yScale(d.y0)}px)`}}
       >
         {this.renderRect(d)}
+        {(d.data[attributionName]) ? this.renderAttribution(d) : null}
         {defsUrl && this.renderText(d, defsUrl)}
         {this.renderText(d)}
       </g>
     );
   }
-
   render() {
     return <g>{this.state.processedData.map(this.renderCell)}</g>;
   }
