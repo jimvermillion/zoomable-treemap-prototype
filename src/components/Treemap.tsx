@@ -217,7 +217,7 @@ export default class Treemap extends React.Component<
     // Get initial x/y scales.
     const scales = Treemap.getScales(props, state);
 
-    // Initialize state with layout, data, and scales.
+    // Return state with layout, data, and scales.
     return {
       layout,
       processedData,

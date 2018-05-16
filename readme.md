@@ -18,7 +18,7 @@ Labels:
 * [ ] good implementation for customizable <defs/> for dropshadow
 
 Resizing: 
-* [ ] Hopefully the <ResponsiveContainer/> will work to pass in `width and height`
+* [x] Hopefully the <ResponsiveContainer/> will work to pass in `width and height`
 
 zoom:
 * [x] Scale x/y to zoom
@@ -29,10 +29,14 @@ possible performance enhancements:
 * [ ] filtering data is also an option. Could filter by only the descendants of zoomed node whose `depth` is less than that of `showToDepth`.
 
 attribution:
-* [ ] how does Evan do it?
-    * [ ] can we apply this to ours
-* [ ] figure it (discovery)
-    * [ ] implement it.
+* [x] how does Evan do it?
+    * [x] can we apply this to ours
+* [x] figure it (discovery)
+    * [x] implement it.
+    
+animation:
+* [ ] Organize anything that can be animated into a dataProcessor function
+* [ ] Use react-move nodeGroup with a start & update function that uses the data processor to animate the treemap.
 
 prototype specific functionality:
 * [ ] UI element such as a slider to control depth/breakdown
