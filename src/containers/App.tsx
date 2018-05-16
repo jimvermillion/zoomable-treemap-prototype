@@ -31,7 +31,7 @@ export default class App extends React.PureComponent<{}, AppState> {
   }
 
   async componentDidMount() {
-    const data = await json('resources/mock_populations.json');
+    const data = await json('resources/mock_populations_with_attributes.json');
     this.setState({ data: App.stratifyData(data) });
   }
 
