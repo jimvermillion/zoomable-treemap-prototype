@@ -35,8 +35,10 @@ attribution:
     * [x] implement it.
     
 animation:
-* [ ] Organize anything that can be animated into a dataProcessor function
-* [ ] Use react-move nodeGroup with a start & update function that uses the data processor to animate the treemap.
+* [x] Investigate if using <Animate /> would make more sense. NAIVE, NodeGroup makes more sense.
+* [ ] Refactor anything that can be consumed by Treemap.tsx into its own class.
+* [ ] Organize anything that can be animated into a dataProcessor function.
+* [ ] Use react-move <NodeGroup /> with a start & update function that uses the data processor to animate the treemap.
 
 prototype specific functionality:
 * [ ] UI element such as a slider to control depth/breakdown
