@@ -12,7 +12,7 @@ interface TreemapTextProps {
   fontMargin?: number;
   fontPadding?: number;
   fontSize?: number;
-  label: string | number;
+  label?: string | number;
 }
 
 export default class TreemapText extends React.Component<TreemapTextProps> {
@@ -24,6 +24,7 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     fontPadding: 8,
     fontMargin: 3,
     fontSize: 12,
+    label: '',
   };
 
   sizingProperties = d => {
