@@ -17,7 +17,7 @@ interface RectangleProps {
   transform?: string;
 }
 
-export default class Rectangle extends React.PureComponent<RectangleProps> {
+export default class TreemapRectangle extends React.PureComponent<RectangleProps> {
   static defaultProps: Partial<RectangleProps> = {
     stroke: null,
     strokeWidth: null,

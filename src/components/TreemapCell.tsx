@@ -74,7 +74,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     const transformBy = Number(strokeWidth) / 2;
 
     return (
-      <Rectangle
+      <TreemapRectangle
         key={`attr-${d.id}`}
         data={d}
         fill={fill}
@@ -103,7 +103,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     } = this.props;
 
     return (
-      <Rectangle
+      <TreemapRectangle
         data={d}
         key={`rect-${d.id}`}
         fill={colorScale(d.data.type)}
