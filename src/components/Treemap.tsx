@@ -1,4 +1,3 @@
-import { max } from 'd3-array';
 import {
   HierarchyRectangularNode,
   treemap,
@@ -14,14 +13,10 @@ import noop from 'lodash-es/noop';
 import React from 'react';
 
 import Rectangle from './Rectangle';
-
-import { stringWidth } from '../utils';
+import TreemapText from './TreemapText';
 
 // Constants
 const DOUBLE_CLICK_TIMING = 250;
-const FONT_SIZE_DEFAULT = 12;
-const FONT_PADDING_DEFAULT = 8;
-const FONT_MARGIN_DEFAULT = 3;
 const ATTRIBUTION_OPACITY = 0.5;
 const DEFAULT_SCALES = {
   xScale: scaleLinear(),
@@ -229,8 +224,6 @@ export default class Treemap extends React.Component<
 
   constructor(props) {
     super(props);
-
-    // Initialize state with layout, data, and scales.
     this.state = Treemap.getProcessedState(props);
   }
 
@@ -239,99 +232,84 @@ export default class Treemap extends React.Component<
   }
 
   componentWillReceiveProps(nextProps) {
-    // Get new processed state.
     const newState = Treemap.getProcessedState(nextProps, this.state);
-
-    // Set state with updated layout, data, and scales.
     this.setState(newState);
   }
 
-  getLayout = () => {
-    // If an initial layout was already made, return it.
-    if (this.state) {
-      return this.state.layout;
-    }
-
-    const {
-      layoutOptions: {
-        padding,
-        round,
-        tile,
-      },
-      width,
-      height,
-    } = this.props;
-
-    return treemap()
-      .tile(tile)
-      .round(round)
-      .size([width, height])
-      .padding(padding);
+  clearAndNullTimout = () => {
+    clearTimeout(this.clickTimeout);
+    this.clickTimeout = null;
   }
 
   handleClicks = (event, data, component) => {
+    const {
+      onClick,
+      onDoubleClick,
+    } = this.props;
+
     if (this.clickTimeout !== null) {
-      this.props.onDoubleClick(event, data, component);
-      clearTimeout(this.clickTimeout);
-      this.clickTimeout = null;
+      onDoubleClick(event, data, component);
+      this.clearAndNullTimout();
     } else {
       this.clickTimeout = setTimeout(() => {
-        this.props.onClick(event, data, component);
-        clearTimeout(this.clickTimeout);
-        this.clickTimeout = null;
+        onClick(event, data, component);
+        this.clearAndNullTimout();
       }, DOUBLE_CLICK_TIMING);
     }
   }
 
-  sizingProperties = d => {
-    const [minValue, maxValue] = this.props.fontSize;
-    const x = max([0, Math.floor(((d.x1 - d.x0) - FONT_PADDING_DEFAULT))]);
-    const y = max([0, Math.floor(((d.y1 - d.y0) - FONT_PADDING_DEFAULT))]);
-    const label = d.data.location_name;
-    const width = stringWidth(label, FONT_SIZE_DEFAULT) / FONT_SIZE_DEFAULT;
-    const direction = (y > x && (width * (minValue + 1)) > x) ? 'topBottom' : 'leftRight';
-    return {
-      x,
-      y,
-      width,
-      direction,
-      minValue,
-      maxValue,
-    };
+  renderText = (datum, dropshadow?) => ((
+    <TreemapText
+      key={`text-${datum.id}-${dropshadow}`}
+      datum={datum}
+      label={datum.data[this.props.fieldAccessors.label]}
+      filterDefsUrl={dropshadow}
+    />
+  ))
+
+  attrWidth = ({ data, x1, x0 }) => {
+    const { xScale } = this.state;
+    const { fieldAccessors: { attribution: { name: attributionName } } } = this.props;
+
+    if (data[attributionName]) {
+      const {value} = data[attributionName];
+      const cellWidth = xScale(x1) - xScale(x0);
+      return (cellWidth * value);
+    }
+
+    return 0;
   }
 
-  fontSize = d => {
+  renderAttribution = d => {
     const {
-      x,
-      y,
-      width,
-      direction,
-      minValue,
-      maxValue,
-    } = this.sizingProperties(d);
-    let size;
-    if (direction === 'leftRight') {
-      size = (y < (x / width)) ? y : (x / width);
-    }
-    if (direction === 'topBottom') {
-      size = (x < (y / width)) ? x : (y / width);
-    }
-    if (size < minValue) {
-      size = 0;
-    }
-    if (size >= maxValue) {
-      size = maxValue;
-    }
-    return size;
-  }
+      onMouseMove,
+      onMouseLeave,
+      onMouseOver,
+      strokeWidth,
+      fieldAccessors: {attribution: {name: attributionName, fill: attributionFill}},
+    } = this.props;
 
-  fontDirection = d => {
-    const { direction } = this.sizingProperties(d);
-    const orientation = {
-      leftRight: `translate(${FONT_MARGIN_DEFAULT}px, ${this.fontSize(d)}px) rotate(0)`,
-      topBottom: `translate(${this.fontSize(d) / FONT_MARGIN_DEFAULT}px, ${FONT_MARGIN_DEFAULT}px) rotate(90deg)`,
-    };
-    return (direction === 'leftRight') ? orientation.leftRight : orientation.topBottom;
+    const { yScale } = this.state;
+
+    const fill = d.data[attributionName] && d.data[attributionName][attributionFill];
+
+    const transformBy = Number(strokeWidth) / 2;
+
+    return (
+      <Rectangle
+        opacity={ATTRIBUTION_OPACITY}
+        transform={`translate(${transformBy}, ${transformBy})`}
+        data={d}
+        key={`attr-${d.id}`}
+        fill={fill}
+        width={this.attrWidth(d) - Number(strokeWidth)}
+        height={yScale(d.y1) - yScale(d.y0) - Number(strokeWidth)}
+        onClick={this.handleClicks}
+        onMouseOver={onMouseOver}
+        onMouseLeave={onMouseLeave}
+        onMouseMove={onMouseMove}
+      />
+    );
   }
 
   renderRect = d => {
@@ -366,63 +344,6 @@ export default class Treemap extends React.Component<
     );
   }
 
-  attrWidth = ({ data, x1, x0 }) => {
-    const {
-      xScale,
-    } = this.state;
-    const {
-      fieldAccessors: { attribution: { name: attributionName } },
-    } = this.props;
-    if (data[attributionName]) {
-      const {value} = data[attributionName];
-      const cellWidth = xScale(x1) - xScale(x0);
-      return (cellWidth * value);
-    }
-    return 0;
-  }
-
-  renderAttribution = d => {
-    const {
-      onMouseMove,
-      onMouseLeave,
-      onMouseOver,
-      strokeWidth,
-      fieldAccessors: { attribution: { name: attributionName, fill: attributionFill } },
-    } = this.props;
-    const {
-      yScale,
-    } = this.state;
-    const fill = d.data[attributionName] && d.data[attributionName][attributionFill];
-    const transformBy = Number(strokeWidth) / 2;
-    return (
-      <Rectangle
-        opacity={ATTRIBUTION_OPACITY}
-        transform={`translate(${transformBy}, ${transformBy})`}
-        data={d}
-        key={`attr-${d.id}`}
-        fill={fill}
-        width={this.attrWidth(d) - Number(strokeWidth)}
-        height={yScale(d.y1) - yScale(d.y0) - Number(strokeWidth)}
-        onClick={this.handleClicks}
-        onMouseOver={onMouseOver}
-        onMouseLeave={onMouseLeave}
-        onMouseMove={onMouseMove}
-      />
-    );
-  }
-  renderText = (d, dropshadow = '') => ((
-    <text
-      fill={dropshadow ? '#000' : '#fff'}
-      filter={dropshadow}
-      key={`text-${d.id}-${dropshadow}`}
-      style={{
-        fontSize: this.fontSize(d),
-        transform: this.fontDirection(d),
-      }}
-    >
-      {d.data[this.props.fieldAccessors.label]}
-    </text>
-  ))
   renderCell = d => {
     const {
       defsUrl,
@@ -444,6 +365,7 @@ export default class Treemap extends React.Component<
       </g>
     );
   }
+
   render() {
     return <g>{this.state.processedData.map(this.renderCell)}</g>;
   }
