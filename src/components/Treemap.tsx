@@ -12,11 +12,11 @@ import { schemeCategory10 } from 'd3-scale-chromatic';
 import noop from 'lodash-es/noop';
 import React from 'react';
 
+import DoubleClickReactComponent, { DoubleClickComponentProps } from './DoubleClickReactComponent';
 import Rectangle from './Rectangle';
 import TreemapText from './TreemapText';
 
 // Constants
-const DOUBLE_CLICK_TIMING = 250;
 const ATTRIBUTION_OPACITY = 0.5;
 const DEFAULT_SCALES = {
   xScale: scaleLinear(),
@@ -39,7 +39,7 @@ interface LayoutOptions {
   tile: any;
 }
 
-interface TreemapProps {
+interface TreemapProps extends DoubleClickComponentProps {
   colorScale?: (input: number | string) => string;
   data: any;
   defsUrl?: string;
@@ -66,12 +66,13 @@ interface TreemapState {
   yScale: ScaleLinear<number, number>;
 }
 
-export default class Treemap extends React.Component<
+export default class Treemap extends DoubleClickReactComponent<
   TreemapProps,
   TreemapState
 > {
-  static defaultProps: Partial<TreemapProps> = {
+  static defaultProps = {
     colorScale: scaleOrdinal(schemeCategory10),
+    doubleClickTiming: 250,
     fontSize: [10, 48],
     layoutOptions: {
       padding: 0,
@@ -220,42 +221,14 @@ export default class Treemap extends React.Component<
     };
   }
 
-  clickTimeout: any;
-
   constructor(props) {
     super(props);
     this.state = Treemap.getProcessedState(props);
   }
 
-  componentDidMount() {
-    this.clickTimeout = null;
-  }
-
   componentWillReceiveProps(nextProps) {
     const newState = Treemap.getProcessedState(nextProps, this.state);
     this.setState(newState);
-  }
-
-  clearAndNullTimout = () => {
-    clearTimeout(this.clickTimeout);
-    this.clickTimeout = null;
-  }
-
-  handleClicks = (event, data, component) => {
-    const {
-      onClick,
-      onDoubleClick,
-    } = this.props;
-
-    if (this.clickTimeout !== null) {
-      onDoubleClick(event, data, component);
-      this.clearAndNullTimout();
-    } else {
-      this.clickTimeout = setTimeout(() => {
-        onClick(event, data, component);
-        this.clearAndNullTimout();
-      }, DOUBLE_CLICK_TIMING);
-    }
   }
 
   renderText = (datum, dropshadow?) => ((
