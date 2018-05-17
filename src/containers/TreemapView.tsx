@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Treemap from '../components/treemap';
+import Treemap from './Treemap';
 
 interface TreemapViewProps {
   data: any;

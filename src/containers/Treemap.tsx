@@ -12,9 +12,9 @@ import { schemeCategory10 } from 'd3-scale-chromatic';
 import noop from 'lodash-es/noop';
 import React from 'react';
 
-import DoubleClickReactComponent, { DoubleClickComponentProps } from './DoubleClickReactComponent';
-import Rectangle from './Rectangle';
-import TreemapText from './TreemapText';
+import DoubleClickReactComponent, { DoubleClickComponentProps } from '../components/DoubleClickReactComponent';
+import Rectangle from '../components/Rectangle';
+import TreemapText from '../components/TreemapText';
 
 // Constants
 const ATTRIBUTION_OPACITY = 0.5;
