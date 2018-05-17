@@ -1,6 +1,4 @@
 import React from 'react';
-import { Transition } from 'react-move';
-import Animate from 'react-move/animate';
 
 interface RectangleProps {
   data: any;
@@ -61,15 +59,17 @@ export default class TreemapRectangle extends React.PureComponent<RectangleProps
     onMouseOver(event, data, this);
   }
 
-  renderRect = ({
-    fill,
-    strokeWidth,
-    stroke,
-    width,
-    height,
-    transform,
-    opacity,
-  }: Partial<RectangleProps>) => {
+  render() {
+    const {
+       fill,
+       strokeWidth,
+       stroke,
+       width,
+       height,
+       transform,
+       opacity,
+     } = this.props;
+
     return (
       <rect
         transform={transform}
@@ -81,43 +81,6 @@ export default class TreemapRectangle extends React.PureComponent<RectangleProps
         opacity={opacity}
         onClick={this.onClick}
       />
-    );
-  }
-
-  render() {
-    const {
-      fill,
-      strokeWidth,
-      stroke,
-      width,
-      height,
-      transform,
-      opacity,
-    } = this.props;
-
-    return (
-      <Animate
-        start={{
-          fill,
-          strokeWidth,
-          stroke,
-          width,
-          height,
-          transform,
-          opacity,
-        }}
-        update={{
-          fill: [fill],
-          strokeWidth: [strokeWidth],
-          stroke: [stroke],
-          width: [width],
-          height: [height],
-          transform: [transform],
-          opacity: [opacity],
-        } as Transition}
-      >
-        {this.renderRect}
-      </Animate>
     );
   }
 }
