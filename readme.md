@@ -15,7 +15,7 @@ Features to complete:
 Labels:
 * [x] size (if should be displayed at all)
 * [x] rotation (if there is space vertically)  
-* [ ] good implementation for customizable <defs/> for dropshadow
+* [x] good implementation for customizable <defs/> for dropshadow
 
 Resizing: 
 * [x] Hopefully the <ResponsiveContainer/> will work to pass in `width and height`
@@ -36,7 +36,8 @@ attribution:
     
 animation:
 * [x] Investigate if using <Animate /> would make more sense. NAIVE, NodeGroup makes more sense.
-* [ ] Refactor anything that can be consumed by Treemap.tsx into its own class.
+* [x] Refactor anything that can be consumed by Treemap.tsx into its own class.
+* [ ] Compile a list of everything that we would like to be animated.
 * [ ] Organize anything that can be animated into a dataProcessor function.
 * [ ] Use react-move <NodeGroup /> with a start & update function that uses the data processor to animate the treemap.
 
