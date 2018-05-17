@@ -10,6 +10,13 @@
     }
   },
   {
+    "location_name": "Spokane",
+    "location_id": 18,
+    "parent_location_id": 5,
+    "value": 2653,
+    "type": 2
+  },
+  {
     "location_name": "Portland",
     "location_id": 6,
     "parent_location_id": 4,

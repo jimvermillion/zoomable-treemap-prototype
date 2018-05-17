@@ -15,10 +15,10 @@ Features to complete:
 Labels:
 * [x] size (if should be displayed at all)
 * [x] rotation (if there is space vertically)  
-* [ ] good implementation for customizable <defs/> for dropshadow
+* [x] good implementation for customizable <defs/> for dropshadow
 
 Resizing: 
-* [ ] Hopefully the <ResponsiveContainer/> will work to pass in `width and height`
+* [x] Hopefully the <ResponsiveContainer/> will work to pass in `width and height`
 
 zoom:
 * [x] Scale x/y to zoom
@@ -29,10 +29,17 @@ possible performance enhancements:
 * [ ] filtering data is also an option. Could filter by only the descendants of zoomed node whose `depth` is less than that of `showToDepth`.
 
 attribution:
-* [ ] how does Evan do it?
-    * [ ] can we apply this to ours
-* [ ] figure it (discovery)
-    * [ ] implement it.
+* [x] how does Evan do it?
+    * [x] can we apply this to ours
+* [x] figure it (discovery)
+    * [x] implement it.
+    
+animation:
+* [x] Investigate if using <Animate /> would make more sense. NAIVE, NodeGroup makes more sense.
+* [x] Refactor anything that can be consumed by Treemap.tsx into its own class.
+* [ ] Compile a list of everything that we would like to be animated.
+* [ ] Organize anything that can be animated into a dataProcessor function.
+* [ ] Use react-move <NodeGroup /> with a start & update function that uses the data processor to animate the treemap.
 
 prototype specific functionality:
 * [ ] UI element such as a slider to control depth/breakdown

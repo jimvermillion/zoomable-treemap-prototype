@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Treemap from '../components/treemap';
+import Treemap from './Treemap';
 
 interface TreemapViewProps {
   data: any;
@@ -85,7 +85,7 @@ export default class TreemapView extends React.PureComponent<
       <Treemap
         data={data}
         rootNodeId={rootNodeId}
-        fieldAccessors={{ label: 'location_name', attribution: { name: 'attribution', fill: 'fill' } }}
+        fieldAccessors={{ label: 'location_name', attribution: { name: 'attribution' } }}
         showToDepth={showToDepth}
         onClick={this.zoomIn}
         onDoubleClick={this.zoomOut}
