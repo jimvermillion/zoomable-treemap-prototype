@@ -12,12 +12,11 @@ import { schemeCategory10 } from 'd3-scale-chromatic';
 import noop from 'lodash-es/noop';
 import React from 'react';
 
-import DoubleClickReactComponent, { DoubleClickComponentProps } from '../components/DoubleClickReactComponent';
-import Rectangle from '../components/Rectangle';
-import TreemapText from '../components/TreemapText';
+import DoubleClickReactComponent, {
+  DoubleClickComponentProps,
+} from '../components/DoubleClickReactComponent';
+import TreemapCell from "../components/TreemapCell";
 
-// Constants
-const ATTRIBUTION_OPACITY = 0.5;
 const DEFAULT_SCALES = {
   xScale: scaleLinear(),
   yScale: scaleLinear(),
@@ -173,22 +172,17 @@ export default class Treemap extends DoubleClickReactComponent<
     };
   }
 
-  static getLayout = (
-    {
-      layoutOptions: {
-        padding,
-        round,
-        tile,
-      },
-      width,
-      height,
-    },
-    layout?,
-  ) => {
-    // If an initial layout was already made, return it.
+  static getLayout = ({ width, height, ...props }, layout) => {
     if (layout) {
+      // If a layout already exists, return it with an updated height.
       return layout.size([width, height]);
     }
+
+    const {
+      padding,
+      round,
+      tile,
+    } = props.layoutOptions;
 
     return treemap()
       .tile(tile)
@@ -231,65 +225,15 @@ export default class Treemap extends DoubleClickReactComponent<
     this.setState(newState);
   }
 
-  renderText = (datum, dropshadow?) => ((
-    <TreemapText
-      key={`text-${datum.id}-${dropshadow}`}
-      datum={datum}
-      label={datum.data[this.props.fieldAccessors.label]}
-      filterDefsUrl={dropshadow}
-    />
-  ))
-
-  attrWidth = ({ data, x1, x0 }) => {
-    const { xScale } = this.state;
-    const { fieldAccessors: { attribution: { name: attributionName } } } = this.props;
-
-    if (data[attributionName]) {
-      const {value} = data[attributionName];
-      const cellWidth = xScale(x1) - xScale(x0);
-      return (cellWidth * value);
-    }
-
-    return 0;
-  }
-
-  renderAttribution = d => {
-    const {
-      onMouseMove,
-      onMouseLeave,
-      onMouseOver,
-      strokeWidth,
-      fieldAccessors: {attribution: {name: attributionName, fill: attributionFill}},
-    } = this.props;
-
-    const { yScale } = this.state;
-
-    const fill = d.data[attributionName] && d.data[attributionName][attributionFill];
-
-    const transformBy = Number(strokeWidth) / 2;
-
-    return (
-      <Rectangle
-        opacity={ATTRIBUTION_OPACITY}
-        transform={`translate(${transformBy}, ${transformBy})`}
-        data={d}
-        key={`attr-${d.id}`}
-        fill={fill}
-        width={this.attrWidth(d) - Number(strokeWidth)}
-        height={yScale(d.y1) - yScale(d.y0) - Number(strokeWidth)}
-        onClick={this.handleClicks}
-        onMouseOver={onMouseOver}
-        onMouseLeave={onMouseLeave}
-        onMouseMove={onMouseMove}
-      />
-    );
-  }
-
-  renderRect = d => {
+  renderTreemapCell = (datum) => {
     const {
       colorScale,
-      onMouseMove,
+      defsUrl,
+      fieldAccessors,
+      onClick,
+      onDoubleClick,
       onMouseLeave,
+      onMouseMove,
       onMouseOver,
       stroke,
       strokeWidth,
@@ -301,45 +245,26 @@ export default class Treemap extends DoubleClickReactComponent<
     } = this.state;
 
     return (
-      <Rectangle
-        data={d}
-        key={`rect-${d.id}`}
-        fill={colorScale(d.data.type)}
-        strokeWidth={strokeWidth}
-        stroke={stroke}
-        width={xScale(d.x1) - xScale(d.x0)}
-        height={yScale(d.y1) - yScale(d.y0)}
-        onClick={this.handleClicks}
-        onMouseOver={onMouseOver}
+      <TreemapCell
+        key={`cell-${datum.id}`}
+        colorScale={colorScale}
+        datum={datum}
+        defsUrl={defsUrl}
+        fieldAccessors={fieldAccessors}
+        onClick={onClick}
+        onDoubleClick={onDoubleClick}
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
+        onMouseOver={onMouseOver}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        xScale={xScale}
+        yScale={yScale}
       />
     );
   }
 
-  renderCell = d => {
-    const {
-      defsUrl,
-      fieldAccessors: { attribution: { name: attributionName } },
-    } = this.props;
-    const {
-      xScale,
-      yScale,
-    } = this.state;
-    return (
-      <g
-        key={`cell-${d.id}`}
-        style={{transform: `translate(${xScale(d.x0)}px, ${yScale(d.y0)}px)`}}
-      >
-        {this.renderRect(d)}
-        {(d.data[attributionName]) ? this.renderAttribution(d) : null}
-        {defsUrl && this.renderText(d, defsUrl)}
-        {this.renderText(d)}
-      </g>
-    );
-  }
-
   render() {
-    return <g>{this.state.processedData.map(this.renderCell)}</g>;
+    return <g>{this.state.processedData.map(this.renderTreemapCell)}</g>;
   }
 }
