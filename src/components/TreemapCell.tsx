@@ -79,7 +79,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
         key={`attr-${d.id}`}
         data={d}
         fill={fill}
-        height={y1 - y0 - Number(strokeWidth)}
+        height={Math.max(0, y1 - y0 - Number(strokeWidth))}
         onClick={this.handleClicks}
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
@@ -112,8 +112,8 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
         fill={colorScale(d.data.type)}
         strokeWidth={strokeWidth}
         stroke={stroke}
-        width={x1 - x0}
-        height={y1 - y0}
+        width={Math.max(0, x1 - x0)}
+        height={Math.max(0, y1 - y0)}
         onClick={this.handleClicks}
         onMouseOver={onMouseOver}
         onMouseLeave={onMouseLeave}
@@ -134,26 +134,26 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     return (
       <Animate
         start={() => ({
-          x0: xScale(datum.x0),
-          x1: xScale(datum.x1),
-          y0: yScale(datum.y0),
-          y1: yScale(datum.y1),
+          x0: Math.max(0, xScale(datum.x0)),
+          x1: Math.max(0, xScale(datum.x1)),
+          y0: Math.max(0, yScale(datum.y0)),
+          y1: Math.max(0, yScale(datum.y1)),
           opacity: 0,
         })}
         enter={[{
-          x0: [xScale(datum.x0)],
-          x1: [xScale(datum.x1)],
-          y0: [yScale(datum.y0)],
-          y1: [yScale(datum.y1)],
+          x0: [Math.max(0, xScale(datum.x0))],
+          x1: [Math.max(0, xScale(datum.x1))],
+          y0: [Math.max(0, yScale(datum.y0))],
+          y1: [Math.max(0, yScale(datum.y1))],
         }, {
           opacity: [1],
           timing: { delay: 333 },
         }]}
         update={[{
-          x0: [xScale(datum.x0)],
-          x1: [xScale(datum.x1)],
-          y0: [yScale(datum.y0)],
-          y1: [yScale(datum.y1)],
+          x0: [Math.max(0, xScale(datum.x0))],
+          x1: [Math.max(0, xScale(datum.x1))],
+          y0: [Math.max(0, yScale(datum.y0))],
+          y1: [Math.max(0, yScale(datum.y1))],
         }, {
           opacity: [1],
           timing: { delay: 333 },
