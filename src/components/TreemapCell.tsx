@@ -1,8 +1,11 @@
 import { ScaleLinear } from 'd3-scale';
 import React from 'react';
+import { Animate } from 'react-move';
 
-import DoubleClickReactComponent, { DoubleClickComponentProps } from '../components/DoubleClickReactComponent';
-import Rectangle from './Rectangle';
+import DoubleClickReactComponent, {
+  DoubleClickComponentProps,
+} from '../components/DoubleClickReactComponent';
+import TreemapRectangle from './TreemapRectangle';
 import TreemapText from './TreemapText';
 
 const ATTRIBUTION_OPACITY = 0.5;
@@ -44,15 +47,12 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     />
   ))
 
-  attributionWidth = ({ data, x1, x0 }) => {
-    const {
-      fieldAccessors: { attribution },
-      xScale,
-    } = this.props;
+  attributionWidth = ({ data, scaled: { x0, x1 } }) => {
+    const { fieldAccessors: { attribution } } = this.props;
 
     if (data[attribution.name]) {
       const {value} = data[attribution.name];
-      const cellWidth = xScale(x1) - xScale(x0);
+      const cellWidth = x1 - x0;
       return (cellWidth * value);
     }
 
@@ -65,20 +65,21 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
       onMouseLeave,
       onMouseOver,
       strokeWidth,
-      fieldAccessors: {attribution: {name: attributionName, fill: attributionFill}},
-      yScale,
+      fieldAccessors: { attribution },
     } = this.props;
 
-    const fill = d.data[attributionName] && d.data[attributionName][attributionFill];
+    const fill = d.data[attribution.name] && d.data[attribution.name][attribution.fill];
 
     const transformBy = Number(strokeWidth) / 2;
+
+    const { y0, y1 } = d.scaled;
 
     return (
       <TreemapRectangle
         key={`attr-${d.id}`}
         data={d}
         fill={fill}
-        height={yScale(d.y1) - yScale(d.y0) - Number(strokeWidth)}
+        height={y1 - y0 - Number(strokeWidth)}
         onClick={this.handleClicks}
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
@@ -98,9 +99,11 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
       onMouseOver,
       stroke,
       strokeWidth,
-      xScale,
-      yScale,
     } = this.props;
+
+    const {
+      x0, x1, y0, y1,
+    } = d.scaled;
 
     return (
       <TreemapRectangle
@@ -109,8 +112,8 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
         fill={colorScale(d.data.type)}
         strokeWidth={strokeWidth}
         stroke={stroke}
-        width={xScale(d.x1) - xScale(d.x0)}
-        height={yScale(d.y1) - yScale(d.y0)}
+        width={x1 - x0}
+        height={y1 - y0}
         onClick={this.handleClicks}
         onMouseOver={onMouseOver}
         onMouseLeave={onMouseLeave}
@@ -129,14 +132,60 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     } = this.props;
 
     return (
-      <g
-        style={{transform: `translate(${xScale(datum.x0)}px, ${yScale(datum.y0)}px)`}}
+      <Animate
+        start={() => ({
+          x0: xScale(datum.x0),
+          x1: xScale(datum.x1),
+          y0: yScale(datum.y0),
+          y1: yScale(datum.y1),
+          opacity: 0,
+        })}
+        enter={[{
+          x0: [xScale(datum.x0)],
+          x1: [xScale(datum.x1)],
+          y0: [yScale(datum.y0)],
+          y1: [yScale(datum.y1)],
+        }, {
+          opacity: [1],
+          timing: { delay: 333 },
+        }]}
+        update={[{
+          x0: [xScale(datum.x0)],
+          x1: [xScale(datum.x1)],
+          y0: [yScale(datum.y0)],
+          y1: [yScale(datum.y1)],
+        }, {
+          opacity: [1],
+          timing: { delay: 333 },
+        }]}
       >
-        {this.renderRect(datum)}
-        {(datum.data[attribution.name]) ? this.renderAttribution(datum) : null}
-        {defsUrl && this.renderText(datum, defsUrl)}
-        {this.renderText(datum)}
-      </g>
+        {animatable => {
+          const {
+            x0,
+            y0,
+            opacity,
+          } = animatable;
+
+          const datumWithAnimatable = {
+            ...datum,
+            scaled: animatable,
+          };
+
+          return (
+            <g
+              style={{
+                opacity: opacity as number,
+                transform: `translate(${x0}px, ${y0}px)`,
+              }}
+            >
+              {this.renderRect(datumWithAnimatable)}
+              {(datum.data[attribution.name]) && this.renderAttribution(datumWithAnimatable)}
+              {defsUrl && this.renderText(datumWithAnimatable, defsUrl)}
+              {this.renderText(datumWithAnimatable)}
+            </g>
+          );
+        }}
+      </Animate>
     );
   }
 }
