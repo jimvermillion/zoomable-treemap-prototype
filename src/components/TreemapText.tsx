@@ -1,5 +1,6 @@
 import { max } from 'd3-array';
 import React from 'react';
+import Animate from 'react-move/Animate';
 
 import { stringWidth } from '../utils';
 
@@ -27,19 +28,25 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     label: '',
   };
 
-  sizingProperties = d => {
+  sizingProperties = () => {
     const {
       fontPadding,
       fontSize,
       fontSizeExtent,
       label,
+      datum: {
+        x0,
+        x1,
+        y0,
+        y1,
+      },
     } = this.props;
 
     const [minValue, maxValue] = fontSizeExtent;
 
-    const x = max([0, Math.floor((d.x1 - d.x0) - fontPadding)]);
+    const x = max([0, Math.floor((x1 - x0) - fontPadding)]);
 
-    const y = max([0, Math.floor((d.y1 - d.y0) - fontPadding)]);
+    const y = max([0, Math.floor((y1 - y0) - fontPadding)]);
 
     const width = stringWidth(label, fontSize) / fontSize;
 
@@ -60,7 +67,7 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     };
   }
 
-  fontSize = d => {
+  fontSize = () => {
     const {
       x,
       y,
@@ -68,7 +75,7 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
       shouldBeVertical,
       minValue,
       maxValue,
-    } = this.sizingProperties(d);
+    } = this.sizingProperties();
 
     let size;
 
@@ -93,41 +100,73 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     return size;
   }
 
-  fontDirection = d => {
+  fontDirection = () => {
     const { fontMargin } = this.props;
 
-    const { shouldBeVertical } = this.sizingProperties(d);
+    const { shouldBeVertical } = this.sizingProperties();
 
-    const labelSize = this.fontSize(d);
+    const labelSize = this.fontSize();
 
-    const horizontal = `translate(${fontMargin}px, ${labelSize}px) rotate(0)`;
+    const horizontal = {
+      x_translate: fontMargin,
+      y_translate: labelSize,
+      rotate: 0,
+    };
 
-    const vertical = `translate(${labelSize / fontMargin}px, ${fontMargin}px) rotate(90deg)`;
+    const vertical = {
+      x_translate: labelSize / fontMargin,
+      y_translate: fontMargin,
+      rotate: 90,
+    };
 
     return shouldBeVertical ? vertical : horizontal ;
   }
 
   render() {
     const {
-      datum,
       filterDefsUrl,
       fill,
       dropShadowFill,
       label,
     } = this.props;
 
+    const {
+      x_translate,
+      y_translate,
+      rotate,
+    } = this.fontDirection();
+
+    const styleFontSize = this.fontSize();
+
     return (
-      <text
-        fill={filterDefsUrl ? dropShadowFill : fill}
-        filter={filterDefsUrl}
-        key={`text-${datum.id}-${filterDefsUrl}`}
-        style={{
-          fontSize: this.fontSize(datum),
-          transform: this.fontDirection(datum),
+      <Animate
+        start={{
+          ...this.fontDirection(),
+          styleFontSize,
+        }}
+        update={{
+          x_translate: [x_translate],
+          y_translate: [y_translate],
+          rotate: [rotate],
+          styleFontSize: [styleFontSize],
         }}
       >
-        {label}
-      </text>
+        {({
+            x_translate: x,
+            y_translate: y,
+            rotate: r,
+            styleFontSize: fontSize,
+        }) => <text
+          fill={filterDefsUrl ? dropShadowFill : fill}
+          filter={filterDefsUrl}
+          style={{
+            fontSize: fontSize as number,
+            transform: `translate(${x}px, ${y}px) rotate(${r}deg)`,
+          }}
+        >
+          {label}
+        </text>}
+      </Animate>
     );
   }
 }
