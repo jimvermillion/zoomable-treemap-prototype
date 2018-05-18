@@ -28,20 +28,18 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     label: '',
   };
 
-  sizingProperties = () => {
-    const {
-      fontPadding,
-      fontSize,
-      fontSizeExtent,
-      label,
-      datum: {
-        x0,
-        x1,
-        y0,
-        y1,
-      },
-    } = this.props;
-
+  static sizingProperties = ({
+    fontPadding,
+    fontSize,
+    fontSizeExtent,
+    label,
+    datum: {
+      x0,
+      x1,
+      y0,
+      y1,
+    },
+  }) => {
     const [minValue, maxValue] = fontSizeExtent;
 
     const x = max([0, Math.floor((x1 - x0) - fontPadding)]);
@@ -67,7 +65,7 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     };
   }
 
-  fontSize = () => {
+  static fontSize = (props) => {
     const {
       x,
       y,
@@ -75,7 +73,7 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
       shouldBeVertical,
       minValue,
       maxValue,
-    } = this.sizingProperties();
+    } = TreemapText.sizingProperties(props);
 
     let size;
 
@@ -100,12 +98,12 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     return size;
   }
 
-  fontDirection = () => {
-    const { fontMargin } = this.props;
+  static fontDirection = (props) => {
+    const { fontMargin } = props;
 
-    const { shouldBeVertical } = this.sizingProperties();
+    const { shouldBeVertical } = TreemapText.sizingProperties(props);
 
-    const labelSize = this.fontSize();
+    const labelSize = TreemapText.fontSize(props);
 
     const horizontal = {
       x_translate: fontMargin,
@@ -134,14 +132,14 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
       x_translate,
       y_translate,
       rotate,
-    } = this.fontDirection();
+    } = TreemapText.fontDirection(this.props);
 
-    const styleFontSize = this.fontSize();
+    const styleFontSize = TreemapText.fontSize(this.props);
 
     return (
       <Animate
         start={{
-          ...this.fontDirection(),
+          ...TreemapText.fontDirection(this.props),
           styleFontSize,
         }}
         update={{
