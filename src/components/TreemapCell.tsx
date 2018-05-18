@@ -1,4 +1,5 @@
 import { ScaleLinear } from 'd3-scale';
+import eq from 'lodash-es/eq';
 import partial from 'lodash-es/partial';
 import React from 'react';
 import { Animate } from 'react-move';
@@ -9,7 +10,11 @@ import DoubleClickReactComponent, {
 import TreemapRectangle from './TreemapRectangle';
 import TreemapText from './TreemapText';
 
-import { animationProcessorFactory } from '../utils/animate';
+import {
+  animationProcessorFactory,
+  propsChanged,
+  stateFromPropUpdates,
+} from '../utils';
 
 const ATTRIBUTION_OPACITY = 0.5;
 const DEFAULT_OPACITY_ANIMATION = {
@@ -56,8 +61,12 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   yScale: ScaleLinear<number, number>;
 }
 
+interface TreemapCellState {
+  animationProcessor: any;
+}
+
 export default class TreemapCell
-extends DoubleClickReactComponent<TreemapCellProps, {}> {
+extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
   static defaultProps = {
     animate: DEFAULT_OPACITY_ANIMATION,
     doubleClickTiming: 250,
@@ -72,6 +81,45 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     'height',
     'width',
   ];
+
+  static propUpdates = {
+    animationProcessor: (acc, _, prevProps, nextProps) => {
+      const animationPropNames = [
+        'xScale',
+        'yScale',
+        'animate',
+        'datum',
+      ];
+
+      if (!propsChanged(prevProps, nextProps, animationPropNames, [], TreemapCell.comparator)) {
+        return acc;
+      }
+
+      const dataProcessor = TreemapCell.datumProcessor(nextProps);
+
+      const animationProcessor = partial(
+        animationProcessorFactory,
+        nextProps.animate,
+        TreemapCell.animatable,
+        dataProcessor,
+      );
+
+      return {
+        ...acc,
+        animationProcessor,
+      };
+    },
+  };
+
+  static comparator(prev, next) {
+    if (prev && prev.domain) {
+      return (
+        eq(prev.domain(), next.domain())
+        || eq(prev.range(), next.range())
+      );
+    }
+    return eq(prev, next);
+  }
 
   static datumProcessor({ xScale, yScale, datum }) {
     const x0 = Math.max(0, xScale(datum.x0));
@@ -88,6 +136,15 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
       height: Math.max(0, y1 - y0),
       width: Math.max(0, x1 - x0),
     });
+  }
+
+  constructor(props) {
+    super(props);
+    this.state = stateFromPropUpdates(TreemapCell.propUpdates, {}, props, {});
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState(stateFromPropUpdates(TreemapCell.propUpdates, this.props, nextProps, {}));
   }
 
   renderText = (datum, dropshadow?) => ((
@@ -211,17 +268,8 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
   }
 
   renderAnimatedCell = () => {
-    const {
-      animate,
-      datum: _,
-    } = this.props;
-
-    const animationProcessor = partial(
-      animationProcessorFactory,
-      animate,
-      TreemapCell.animatable,
-      TreemapCell.datumProcessor(this.props),
-    );
+    const { datum: _ } = this.props;
+    const { animationProcessor } = this.state;
 
     return (
       <Animate
