@@ -35,12 +35,31 @@ attribution:
     * [x] implement it.
     
 animation:
-* [x] Investigate if using <Animate /> would make more sense. NAIVE, NodeGroup makes more sense.
+* [x] Investigate if using <Animate /> would make sense.
 * [x] Refactor anything that can be consumed by Treemap.tsx into its own class.
-* [ ] Compile a list of everything that we would like to be animated.
+* [x] Compile a list of everything that we would like to be animated.
+* [x] Use <Animate /> more to figure out exactly how to fine tune animation.
 * [ ] Organize anything that can be animated into a dataProcessor function.
-* [ ] Use react-move <NodeGroup /> with a start & update function that uses the data processor to animate the treemap.
+* [ ] Use react-move <NodeGroup /> that uses the data processor to animate the treemap in the way already established in IHME-UI react-move branches.
+
+zoom logic: 
+* [ ] when at a leaf, zoom out should go to direct parent?
 
 prototype specific functionality:
 * [ ] UI element such as a slider to control depth/breakdown
 * [x] click to zoom
+
+## Animation notes:
+### List of things one might want to animate:
+- x0, x1, y0, y1 of the cells
+- Text size/rotation
+- Introduction of child cells
+- attribution amount <- independently
+- cell fill color change
+
+### Current notes on animation challenges
+This implementation is ~somewhat~ the equivalent of hard-coding what we want the animation to do. Which is pretty far from the peripheral goal of making the Treemap generic enough for IHME-UI. It would be good to put all animation decisions into a single datum processing function that can be passed to the animation NodeGroup. This will probably require some instance functions to be static class functions so that the Treemap component can get the same results that are currently derived from instance methods. 
+* The datum processor should have an additional map that wraps any animation methods in an array.
+* It may be good to actually return an array with each prop wrapped in an object and an array for (as the animation functions do in ihme-ui).
+* The lower level components could be passed the calculated props, or calc themselves if they are not present.
+* It is becoming more apparent that the data should be first top-filtered to its root node. This could help performance as well as tuning animation since I'm not convinced nodes currently `leave` the dom triggering that animation event.
