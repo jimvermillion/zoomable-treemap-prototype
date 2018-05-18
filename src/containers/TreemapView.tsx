@@ -20,7 +20,7 @@ export default class TreemapView extends React.PureComponent<
 > {
   constructor(props) {
     super(props);
-    this.state = { showToDepth: 0 };
+    this.state = { showToDepth: 3 };
   }
 
   zoomOut = (_, node) => {
