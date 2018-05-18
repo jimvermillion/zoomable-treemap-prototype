@@ -1,10 +1,18 @@
 import { max } from 'd3-array';
+import partial from 'lodash-es/partial';
 import React from 'react';
-import Animate from 'react-move/Animate';
+import {
+  Animate,
+  PlainObject,
+} from 'react-move';
 
-import { stringWidth } from '../utils';
+import {
+  animationProcessorFactory,
+  stringWidth,
+} from '../utils';
 
 interface TreemapTextProps {
+  animate?: boolean;
   datum: any;
   dropShadowFill?: string;
   fill?: string;
@@ -18,6 +26,7 @@ interface TreemapTextProps {
 
 export default class TreemapText extends React.Component<TreemapTextProps> {
   static defaultProps = {
+    animate: true,
     dropShadowFill: '#000',
     fill: '#fff',
     filterDefsUrl: '',
@@ -27,6 +36,20 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     fontSize: 12,
     label: '',
   };
+
+  static animatable = [
+    'x_translate',
+    'y_translate',
+    'rotate',
+    'fontSize',
+  ];
+
+  static datumProcessor(props) {
+    return () => ({
+      ...TreemapText.fontDirection(props),
+      fontSize: TreemapText.fontSize(props),
+    });
+  }
 
   static sizingProperties = ({
     fontPadding,
@@ -120,7 +143,12 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     return shouldBeVertical ? vertical : horizontal ;
   }
 
-  render() {
+  renderText = ({
+    x_translate,
+    y_translate,
+    rotate,
+    fontSize,
+  }: PlainObject) => {
     const {
       filterDefsUrl,
       fill,
@@ -128,43 +156,55 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
       label,
     } = this.props;
 
-    const {
-      x_translate,
-      y_translate,
-      rotate,
-    } = TreemapText.fontDirection(this.props);
+    return (
+      <text
+        fill={filterDefsUrl ? dropShadowFill : fill}
+        filter={filterDefsUrl}
+        style={{
+          fontSize: fontSize as number,
+          transform: `translate(${x_translate}px, ${y_translate}px) rotate(${rotate}deg)`,
+        }}
+      >
+        {label}
+      </text>
+    );
+  }
 
-    const styleFontSize = TreemapText.fontSize(this.props);
+  renderAnimatedText = () => {
+    const {
+      animate,
+      datum: _,
+    } = this.props;
+
+    const animationProcessor = partial(
+      animationProcessorFactory,
+      animate,
+      TreemapText.animatable,
+      TreemapText.datumProcessor(this.props),
+    );
 
     return (
       <Animate
-        start={{
-          ...TreemapText.fontDirection(this.props),
-          styleFontSize,
-        }}
-        update={{
-          x_translate: [x_translate],
-          y_translate: [y_translate],
-          rotate: [rotate],
-          styleFontSize: [styleFontSize],
-        }}
+        start={animationProcessor('start')(_)}
+        enter={animationProcessor('enter')(_)}
+        update={animationProcessor('update')(_)}
+        leave={animationProcessor('leave')(_)}
       >
-        {({
-            x_translate: x,
-            y_translate: y,
-            rotate: r,
-            styleFontSize: fontSize,
-        }) => <text
-          fill={filterDefsUrl ? dropShadowFill : fill}
-          filter={filterDefsUrl}
-          style={{
-            fontSize: fontSize as number,
-            transform: `translate(${x}px, ${y}px) rotate(${r}deg)`,
-          }}
-        >
-          {label}
-        </text>}
+        {this.renderText}
       </Animate>
     );
+  }
+
+  shouldAnimate() {
+    return !!this.props.animate;
+  }
+
+  render() {
+    if (this.shouldAnimate()) {
+      return this.renderAnimatedText();
+    }
+
+    const processedDatum = TreemapText.datumProcessor(this.props)();
+    return this.renderText(processedDatum);
   }
 }
