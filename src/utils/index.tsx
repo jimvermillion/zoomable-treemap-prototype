@@ -1,1 +1,2 @@
-export * from "./string-width";
+export { animationProcessorFactory } from './animate';
+export * from './string-width';
