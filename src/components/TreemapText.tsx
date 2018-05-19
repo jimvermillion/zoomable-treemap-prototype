@@ -1,4 +1,3 @@
-import { max } from 'd3-array';
 import partial from 'lodash-es/partial';
 import React from 'react';
 import {
@@ -65,9 +64,9 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
   }) => {
     const [minValue, maxValue] = fontSizeExtent;
 
-    const x = max([0, Math.floor((x1 - x0) - fontPadding)]);
+    const x = Math.max(0, Math.floor((x1 - x0) - fontPadding));
 
-    const y = max([0, Math.floor((y1 - y0) - fontPadding)]);
+    const y = Math.max(0, Math.floor((y1 - y0) - fontPadding));
 
     const width = stringWidth(label, fontSize) / fontSize;
 
