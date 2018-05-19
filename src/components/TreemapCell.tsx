@@ -112,8 +112,9 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
   };
 
   static comparator(prev, next) {
-    if (prev && prev.domain) {
+    if (prev && prev.domain && prev.range) {
       return (
+        // Check if domain and range have changed.
         eq(prev.domain(), next.domain())
         || eq(prev.range(), next.range())
       );
