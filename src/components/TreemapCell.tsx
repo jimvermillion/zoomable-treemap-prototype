@@ -122,10 +122,10 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
   }
 
   static datumProcessor({ xScale, yScale, datum }) {
-    const x0 = Math.max(0, xScale(datum.x0));
-    const x1 = Math.max(0, xScale(datum.x1));
-    const y0 = Math.max(0, yScale(datum.y0));
-    const y1 = Math.max(0, yScale(datum.y1));
+    const x0 = xScale(datum.x0);
+    const x1 = xScale(datum.x1);
+    const y0 = yScale(datum.y0);
+    const y1 = yScale(datum.y1);
 
     return (_?): TreemapCellProcessedData => ({
       x0,
@@ -133,8 +133,8 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
       y0,
       y1,
       opacity: 0,
-      height: Math.max(0, y1 - y0),
-      width: Math.max(0, x1 - x0),
+      height: y1 - y0,
+      width: x1 - x0,
     });
   }
 
@@ -196,7 +196,7 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
         key={`attr-${datum.id}`}
         data={datum}
         fill={fill}
-        height={Math.max(0, height - Number(strokeWidth))}
+        height={height - Number(strokeWidth)}
         onClick={this.handleClicks}
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}

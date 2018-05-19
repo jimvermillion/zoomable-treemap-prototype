@@ -76,8 +76,8 @@ export default class TreemapRectangle extends React.PureComponent<RectangleProps
         fill={fill}
         strokeWidth={strokeWidth}
         stroke={stroke}
-        width={width}
-        height={height}
+        width={Math.max(0, width)}
+        height={Math.max(0, height)}
         opacity={opacity}
         onClick={this.onClick}
       />
