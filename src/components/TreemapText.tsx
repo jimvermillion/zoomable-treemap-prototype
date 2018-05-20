@@ -1,14 +1,6 @@
-import partial from 'lodash-es/partial';
 import React from 'react';
-import {
-  Animate,
-  PlainObject,
-} from 'react-move';
 
-import {
-  animationProcessorFactory,
-  stringWidth,
-} from '../utils';
+import { stringWidth } from '../utils';
 
 interface TreemapTextProps {
   animate?: boolean;
@@ -20,6 +12,7 @@ interface TreemapTextProps {
   fontMargin?: number;
   fontPadding?: number;
   fontSize?: number;
+  processedDatum?: any;
   label?: string | number;
 }
 
@@ -43,12 +36,10 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     'fontSize',
   ];
 
-  static datumProcessor(props) {
-    return () => ({
-      ...TreemapText.fontDirection(props),
-      fontSize: TreemapText.fontSize(props),
-    });
-  }
+  static processDatum = (props) => ({
+    ...TreemapText.fontDirection(props),
+    fontSize: TreemapText.fontSize(props),
+  })
 
   static sizingProperties = ({
     fontPadding,
@@ -143,11 +134,11 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
   }
 
   renderText = ({
-    x_translate,
-    y_translate,
-    rotate,
-    fontSize,
-  }: PlainObject) => {
+     x_translate,
+     y_translate,
+     rotate,
+     fontSize,
+   }) => {
     const {
       filterDefsUrl,
       fill,
@@ -169,41 +160,12 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     );
   }
 
-  renderAnimatedText = () => {
-    const {
-      animate,
-      datum: _,
-    } = this.props;
-
-    const animationProcessor = partial(
-      animationProcessorFactory,
-      animate,
-      TreemapText.animatable,
-      TreemapText.datumProcessor(this.props),
-    );
-
-    return (
-      <Animate
-        start={animationProcessor('start')(_)}
-        enter={animationProcessor('enter')(_)}
-        update={animationProcessor('update')(_)}
-        leave={animationProcessor('leave')(_)}
-      >
-        {this.renderText}
-      </Animate>
-    );
-  }
-
-  shouldAnimate() {
-    return !!this.props.animate;
-  }
-
   render() {
-    if (this.shouldAnimate()) {
-      return this.renderAnimatedText();
-    }
+    const { processedDatum } = this.props;
 
-    const processedDatum = TreemapText.datumProcessor(this.props)();
-    return this.renderText(processedDatum);
+    return this.renderText(
+      processedDatum
+      || TreemapText.processDatum(this.props),
+    );
   }
 }

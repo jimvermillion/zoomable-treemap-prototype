@@ -9,17 +9,35 @@ import {
   scaleOrdinal,
 } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
+import {
+  propsChanged,
+  stateFromPropUpdates,
+} from 'ihme-ui';
 import noop from 'lodash-es/noop';
+import partial from 'lodash-es/partial';
 import React from 'react';
+import {
+  NodeGroup,
+} from 'react-move';
 
 import DoubleClickReactComponent, {
   DoubleClickComponentProps,
 } from '../components/DoubleClickReactComponent';
-import TreemapCell from "../components/TreemapCell";
+import TreemapCell from '../components/TreemapCell';
+import TreemapText from '../components/TreemapText';
+
+import { animationProcessorFactory } from '../utils';
 
 const DEFAULT_SCALES = {
   xScale: scaleLinear(),
   yScale: scaleLinear(),
+};
+
+const DEFAULT_OPACITY_ANIMATION = {
+  opacity: () => ({
+    opacity: [1],
+    timing: { delay: 333 },
+  }),
 };
 
 interface AttributionFieldAccessors {
@@ -39,11 +57,14 @@ interface LayoutOptions {
 }
 
 interface TreemapProps extends DoubleClickComponentProps {
+  animate?: any;
   colorScale?: (input: number | string) => string;
   data: any;
   defsUrl?: string;
   fieldAccessors: TreemapFieldAccessors;
-  fontSize?: number[];
+  fontPadding?: number;
+  fontSize?: number;
+  fontSizeExtent?: [number, number];
   height: number;
   layoutOptions?: LayoutOptions;
   onClick?: (...args: any[]) => void;
@@ -59,8 +80,10 @@ interface TreemapProps extends DoubleClickComponentProps {
 }
 
 interface TreemapState {
+  animationProcessor: any;
+  datumProcessor: any;
   layout: any;
-  processedData: any;
+  treemapData: any;
   xScale: ScaleLinear<number, number>;
   yScale: ScaleLinear<number, number>;
 }
@@ -70,9 +93,13 @@ export default class Treemap extends DoubleClickReactComponent<
   TreemapState
 > {
   static defaultProps = {
+    animate: DEFAULT_OPACITY_ANIMATION,
     colorScale: scaleOrdinal(schemeCategory10),
     doubleClickTiming: 250,
-    fontSize: [10, 48],
+    fontPadding: 8,
+    fontMargin: 3,
+    fontSize: 12,
+    fontSizeExtent: [10, 48],
     layoutOptions: {
       padding: 0,
       round: true,
@@ -85,6 +112,52 @@ export default class Treemap extends DoubleClickReactComponent<
     showToDepth: 1,
     stroke: '#fff',
     strokeWidth: 3,
+  };
+
+  static propUpdates = { // TODO: split up processors when we figure out why it was broken
+    animationProcessor: (acc, _, prevProps, nextProps, state) => {
+      const animationPropNames = [ // TODO: AUDIT THIS LIST
+        'animate',
+        'data',
+        'height',
+        'width',
+        'rootNodeId',
+        'showToDepth',
+      ];
+
+      if (!propsChanged(prevProps, nextProps, animationPropNames)) {
+        return acc;
+      }
+
+      // Get the `treemap` layout.
+      const layout = Treemap.getLayout(nextProps, state && state.layout);
+
+      // Process data through the treemap layout.
+      const treemapData = Treemap.processDataWithLayout(nextProps, layout);
+
+      // Get initial x/y scales.
+      const scales = Treemap.getScales(nextProps, state);
+
+      // Establish data processor.
+      const datumProcessor = Treemap.getDatumProcessor(nextProps, scales);
+
+      // Get animation processor.
+      const animationProcessor = partial(
+        animationProcessorFactory,
+        nextProps.animate,
+        [...TreemapCell.animatable, ...TreemapText.animatable],
+        datumProcessor,
+      );
+
+      return {
+        ...acc,
+        animationProcessor,
+        datumProcessor,
+        layout,
+        scales,
+        treemapData,
+      };
+    },
   };
 
   /**
@@ -172,6 +245,12 @@ export default class Treemap extends DoubleClickReactComponent<
     };
   }
 
+  static processDataWithLayout({ data, showToDepth }, layout) {
+    return layout(data)
+      .descendants()
+      .filter(({ depth }) => depth <= showToDepth);
+  }
+
   static getLayout = ({ width, height, ...props }, layout) => {
     if (layout) {
       // If a layout already exists, return it with an updated height.
@@ -191,45 +270,81 @@ export default class Treemap extends DoubleClickReactComponent<
       .padding(padding);
   }
 
-  static processDataWithLayout({ data, showToDepth }, layout) {
-    return layout(data)
-      .descendants()
-      .filter(({ depth }) => depth <= showToDepth);
+  static getTextDatumProcessor(props) {
+    return (datum) => {
+      const label = datum.data[props.fieldAccessors.label];
+
+      const textProps = {
+        datum,
+        fontPadding: props.fontPadding,
+        fontMargin: props.fontMargin,
+        fontSize: props.fontSize,
+        fontSizeExtent: props.fontSizeExtent,
+        label,
+      };
+
+      return {
+        ...TreemapText.processDatum(textProps),
+        label,
+      };
+    };
   }
 
-  static getProcessedState(props, state?) {
-    // Get the `treemap` layout.
-    const layout = Treemap.getLayout(props, state && state.layout);
+  static getCellDatumProcessor({ fieldAccessors }, scales) {
+    const cellDatumProcessor = TreemapCell.getDatumProcessor(scales);
 
-    // Process data through the layout.
-    const processedData = Treemap.processDataWithLayout(props, layout);
+    return (datum) => {
+      const shouldRenderAttribution = datum.data[fieldAccessors.attribution.name];
 
-    // Get initial x/y scales.
-    const scales = Treemap.getScales(props, state);
+      const attributionFill = ( // TODO Use propResolver?
+        shouldRenderAttribution
+        && datum.data[fieldAccessors.attribution.name][fieldAccessors.attribution.fill]
+      );
 
-    // Return state with layout, data, and scales.
-    return {
-      layout,
-      processedData,
-      ...scales,
+      return {
+        attributionFill,
+        shouldRenderAttribution,
+        ...cellDatumProcessor(datum),
+      };
     };
+  }
+
+  static getDatumProcessor(props, scales) {
+    const textDatumProcessor = Treemap.getTextDatumProcessor(props);
+    const cellDatumProcessor = Treemap.getCellDatumProcessor(props, scales);
+
+    return datum => ({ ...textDatumProcessor(datum), ...cellDatumProcessor(datum) });
   }
 
   constructor(props) {
     super(props);
-    this.state = Treemap.getProcessedState(props);
+    this.state = stateFromPropUpdates(Treemap.propUpdates, {}, props, {});
   }
 
   componentWillReceiveProps(nextProps) {
-    const newState = Treemap.getProcessedState(nextProps, this.state);
-    this.setState(newState);
+    this.setState(stateFromPropUpdates(Treemap.propUpdates, this.props, nextProps, this.state));
   }
 
-  renderTreemapCell = (datum) => {
+  processData() {
+    const {
+      treemapData,
+      datumProcessor,
+    } = this.state;
+
+    return treemapData.map(datumProcessor);
+  }
+
+  renderTreemapCell = ({
+    data: datum,
+    key,
+    state: processedDatum,
+  }) => {
     const {
       colorScale,
       defsUrl,
       fieldAccessors,
+      fontPadding,
+      fontSizeExtent,
       onClick,
       onDoubleClick,
       onMouseLeave,
@@ -240,31 +355,68 @@ export default class Treemap extends DoubleClickReactComponent<
     } = this.props;
 
     const {
-      xScale,
-      yScale,
-    } = this.state;
+      attributionFill,
+      shouldRenderAttribution,
+    } = processedDatum;
 
     return (
       <TreemapCell
-        key={`cell-${datum.id}`}
-        colorScale={colorScale}
+        key={key}
+        attributionFill={attributionFill}
+        shouldRenderAttribution={shouldRenderAttribution}
+        cellFill={colorScale(datum.data.type)}
         datum={datum}
         defsUrl={defsUrl}
         fieldAccessors={fieldAccessors}
+        fontPadding={fontPadding}
+        fontSizeExtent={fontSizeExtent}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}
+        processedDatum={processedDatum}
         stroke={stroke}
         strokeWidth={strokeWidth}
-        xScale={xScale}
-        yScale={yScale}
       />
     );
   }
 
+  renderTreemap(processedData) {
+    return (
+      <g>{processedData.map(this.renderTreemapCell)}</g>
+    );
+  }
+
+  renderAnimatedTreemap() {
+    const {
+      animationProcessor,
+      treemapData,
+    } = this.state;
+
+    return (
+      <NodeGroup
+        data={treemapData}
+        keyAccessor={datum => `cell-${datum.id}`}
+        start={animationProcessor('start')}
+        enter={animationProcessor('enter')}
+        update={animationProcessor('update')}
+        leave={animationProcessor('leave')}
+      >
+        {nodes => <g>{nodes.map(this.renderTreemapCell)}</g>}
+     </NodeGroup>);
+  }
+
+  shouldAnimate() {
+    return this.props.animate;
+  }
+
   render() {
-    return <g>{this.state.processedData.map(this.renderTreemapCell)}</g>;
+    if (this.shouldAnimate()) {
+      return this.renderAnimatedTreemap();
+    }
+
+    const processedData = this.processData();
+    return this.renderTreemap(processedData);
   }
 }

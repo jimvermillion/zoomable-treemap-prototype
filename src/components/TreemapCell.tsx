@@ -1,8 +1,4 @@
-import { ScaleLinear } from 'd3-scale';
-import eq from 'lodash-es/eq';
-import partial from 'lodash-es/partial';
 import React from 'react';
-import { Animate } from 'react-move';
 
 import DoubleClickReactComponent, {
   DoubleClickComponentProps,
@@ -10,19 +6,7 @@ import DoubleClickReactComponent, {
 import TreemapRectangle from './TreemapRectangle';
 import TreemapText from './TreemapText';
 
-import {
-  animationProcessorFactory,
-  propsChanged,
-  stateFromPropUpdates,
-} from '../utils';
-
 const ATTRIBUTION_OPACITY = 0.5;
-const DEFAULT_OPACITY_ANIMATION = {
-  opacity: () => ({
-    opacity: [1],
-    timing: { delay: 333 },
-  }),
-};
 
 interface AttributionFieldAccessors {
   name: string;
@@ -34,7 +18,7 @@ interface TreemapFieldAccessors {
   attribution?: AttributionFieldAccessors;
 }
 
-interface TreemapCellProcessedData {
+interface TreemapCellProcessedDatum {
   x0: number;
   x1: number;
   y0: number;
@@ -42,34 +26,39 @@ interface TreemapCellProcessedData {
   opacity: number;
   height: number;
   width: number;
+  label: string;
+  x_translate: number;
+  y_translate: number;
+  rotate: number;
 }
 
 interface TreemapCellProps extends DoubleClickComponentProps {
   animate?: any;
-  colorScale: (input: number | string) => string;
+  attributionFill: string;
+  cellFill: string;
+  colorScale?: (input: number | string) => string; // TODO: audit props
   datum: any;
   defsUrl: string;
   fieldAccessors: TreemapFieldAccessors;
+  fontPadding: number;
+  fontSizeExtent: [number, number];
   onClick: (...args: any[]) => void;
   onDoubleClick: (...args: any[]) => void;
   onMouseLeave: (...args: any[]) => void;
   onMouseMove: (...args: any[]) => void;
   onMouseOver: (...args: any[]) => void;
+  shouldRenderAttribution?: boolean;
   stroke: string;
   strokeWidth: number | string;
-  xScale: ScaleLinear<number, number>;
-  yScale: ScaleLinear<number, number>;
-}
-
-interface TreemapCellState {
-  animationProcessor: any;
+  processedDatum: TreemapCellProcessedDatum;
 }
 
 export default class TreemapCell
-extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
+extends DoubleClickReactComponent<TreemapCellProps, {}> {
   static defaultProps = {
-    animate: DEFAULT_OPACITY_ANIMATION,
+    animate: false,
     doubleClickTiming: 250,
+    shouldRenderAttribution: false,
   };
 
   static animatable = [
@@ -82,89 +71,44 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
     'width',
   ];
 
-  static propUpdates = {
-    animationProcessor: (acc, _, prevProps, nextProps) => {
-      const animationPropNames = [
-        'xScale',
-        'yScale',
-        'animate',
-        'datum',
-      ];
-
-      if (!propsChanged(prevProps, nextProps, animationPropNames, [], TreemapCell.comparator)) {
-        return acc;
-      }
-
-      const dataProcessor = TreemapCell.datumProcessor(nextProps);
-
-      const animationProcessor = partial(
-        animationProcessorFactory,
-        nextProps.animate,
-        TreemapCell.animatable,
-        dataProcessor,
-      );
+  static getDatumProcessor({ xScale, yScale }) {
+    return (datum) => {
+      const x0 = xScale(datum.x0);
+      const x1 = xScale(datum.x1);
+      const y0 = yScale(datum.y0);
+      const y1 = yScale(datum.y1);
 
       return {
-        ...acc,
-        animationProcessor,
+        x0,
+        x1,
+        y0,
+        y1,
+        opacity: 0,
+        height: y1 - y0,
+        width: x1 - x0,
       };
-    },
-  };
-
-  static comparator(prev, next) {
-    if (prev && prev.domain && prev.range) {
-      return (
-        // Check if domain and range have changed.
-        eq(prev.domain(), next.domain())
-        || eq(prev.range(), next.range())
-      );
-    }
-    return eq(prev, next);
-  }
-
-  static datumProcessor({ xScale, yScale, datum }) {
-    const x0 = xScale(datum.x0);
-    const x1 = xScale(datum.x1);
-    const y0 = yScale(datum.y0);
-    const y1 = yScale(datum.y1);
-
-    return (_?): TreemapCellProcessedData => ({
-      x0,
-      x1,
-      y0,
-      y1,
-      opacity: 0,
-      height: y1 - y0,
-      width: x1 - x0,
-    });
-  }
-
-  constructor(props) {
-    super(props);
-    this.state = stateFromPropUpdates(TreemapCell.propUpdates, {}, props, {});
-  }
-
-  componentWillReceiveProps(nextProps) {
-    this.setState(stateFromPropUpdates(TreemapCell.propUpdates, this.props, nextProps, {}));
+    };
   }
 
   renderText = (datum, dropshadow?) => ((
+    // TODO: this is now a mess. Clarify ...this.props.
     <TreemapText
       key={`text-${datum.id}-${dropshadow}`}
+      {...this.props}
       datum={datum}
       filterDefsUrl={dropshadow}
-      label={datum.data[this.props.fieldAccessors.label]}
+      label={this.props.processedDatum.label}
     />
   ))
 
   attributionWidth = ({ x0, x1 }) => {
     const {
       datum: { data },
-      fieldAccessors: { attribution },
+      fieldAccessors: { attribution }, // TODO: ANYTHING THAT NEEDS A PROP RESOLVER, DO IN TREEMAP
     } = this.props;
 
     if (data[attribution.name]) {
-      const {value} = data[attribution.name];
+      const { value } = data[attribution.name];
       const cellWidth = x1 - x0;
       return (cellWidth * value);
     }
@@ -175,20 +119,15 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
   renderAttribution = ({
     height,
     ...processedData,
-  }: TreemapCellProcessedData) => {
+  }: TreemapCellProcessedDatum) => {
     const {
+      attributionFill,
       datum,
       onMouseMove,
       onMouseLeave,
       onMouseOver,
       strokeWidth,
-      fieldAccessors: { attribution },
     } = this.props;
-
-    const fill = (
-      datum.data[attribution.name]
-      && datum.data[attribution.name][attribution.fill]
-    );
 
     const transformBy = Number(strokeWidth) / 2;
 
@@ -196,7 +135,7 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
       <TreemapRectangle
         key={`attr-${datum.id}`}
         data={datum}
-        fill={fill}
+        fill={attributionFill}
         height={height - Number(strokeWidth)}
         onClick={this.handleClicks}
         onMouseLeave={onMouseLeave}
@@ -214,7 +153,7 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
     width,
   }) => {
     const {
-      colorScale,
+      cellFill,
       datum,
       onMouseMove,
       onMouseLeave,
@@ -227,7 +166,7 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
       <TreemapRectangle
         data={datum}
         key={`rect-${datum.id}`}
-        fill={colorScale(datum.data.type)}
+        fill={cellFill}
         strokeWidth={strokeWidth}
         stroke={stroke}
         width={width}
@@ -240,11 +179,11 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
     );
   }
 
-  renderCell = processedDatum => {
+  renderCell = (processedDatum) => {
     const {
       datum,
       defsUrl,
-      fieldAccessors: { attribution },
+      shouldRenderAttribution,
     } = this.props;
 
     const {
@@ -255,45 +194,29 @@ extends DoubleClickReactComponent<TreemapCellProps, TreemapCellState> {
 
     return (
       <g
+        key={`cell-${datum.id}`}
         style={{
           opacity: opacity as number,
           transform: `translate(${x0}px, ${y0}px)`,
         }}
       >
         {this.renderRect(processedDatum)}
-        {(datum.data[attribution.name]) && this.renderAttribution(processedDatum)}
+        {shouldRenderAttribution && this.renderAttribution(processedDatum)}
         {defsUrl && this.renderText(datum, defsUrl)}
         {this.renderText(datum)}
       </g>
     );
   }
-
-  renderAnimatedCell = () => {
-    const { datum: _ } = this.props;
-    const { animationProcessor } = this.state;
-
-    return (
-      <Animate
-        start={animationProcessor('start')(_)}
-        enter={animationProcessor('enter')(_)}
-        update={animationProcessor('update')(_)}
-        leave={animationProcessor('leave')(_)}
-      >
-        {this.renderCell}
-      </Animate>
-    );
-  }
-
-  shouldAnimate() {
-    return !!this.props.animate;
-  }
-
+// TODO: reinstall singular animation work. Both may be the best implementation.
   render() {
-    if (this.shouldAnimate()) {
-      return this.renderAnimatedCell();
-    }
+    const {
+      // datum,
+      processedDatum,
+    } = this.props;
 
-    const processedDatum = TreemapCell.datumProcessor(this.props)();
-    return this.renderCell(processedDatum);
+    return this.renderCell(
+      processedDatum,
+      // || TreemapCell.getDatumProcessor(this.props)(datum),
+    );
   }
 }
