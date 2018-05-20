@@ -13,8 +13,10 @@ import {
   propsChanged,
   stateFromPropUpdates,
 } from 'ihme-ui';
+import findIndex from 'lodash-es/findIndex';
 import noop from 'lodash-es/noop';
 import partial from 'lodash-es/partial';
+import sortBy from 'lodash-es/sortBy';
 import React from 'react';
 import {
   NodeGroup,
@@ -74,6 +76,7 @@ interface TreemapProps extends DoubleClickComponentProps {
   onMouseMove?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
   rootNodeId?: number | string;
+  selected?: number | number[] | string | string[];
   showToDepth: number;
   stroke?: string;
   strokeWidth?: number | string;
@@ -246,10 +249,21 @@ export default class Treemap extends DoubleClickReactComponent<
     };
   }
 
-  static processDataWithLayout({ data, showToDepth }, layout) {
-    return layout(data)
+  static processDataWithLayout({ data, showToDepth, selection }, layout) {
+    const unsorted = layout(data)
       .descendants()
-      .filter(({ depth }) => depth <= showToDepth);
+      .filter(({ children, depth }) => (
+        // At the current depth
+        depth === showToDepth
+        // or a t a previous depth without children
+        || (depth < showToDepth && !children)
+      ));
+
+    return (
+      selection
+      ? sortBy(data, datum => findIndex(selection, selected => selected.includes(datum.id)))
+      : unsorted
+    );
   }
 
   static getLayout = ({ width, height, ...props }, layout) => {

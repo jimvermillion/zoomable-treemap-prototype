@@ -26,7 +26,7 @@ zoom:
 * [x] Adding event handlers would be necessary and it would be smart to handle them here, including double-click.
 
 possible performance enhancements:
-* [ ] filtering data is also an option. Could filter by only the descendants of zoomed node whose `depth` is less than that of `showToDepth`.
+* [x] filtering data is also an option. Could filter by only the descendants of zoomed node whose `depth` is less than that of `showToDepth`.
 
 attribution:
 * [x] how does Evan do it?
@@ -61,4 +61,7 @@ prototype specific functionality:
 * [ ] Don't render attribution if no value is given
   * [ ] Clean up attribution field accessors
 * [ ] use propResolver where available, streamline what gets fed to components.
-* [ ] Implement selected cells (sort data putting selected cells last) 
+  * [ ] implement `keyField` rest of common accessors.
+* [x] Implement selected cells (sort data putting selected cells last)
+* [ ] Implement onmouseover/hover for focused node.
+* [ ] get rid of `any`s where possible. 
