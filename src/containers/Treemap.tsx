@@ -161,29 +161,6 @@ export default class Treemap extends DoubleClickReactComponent<
   };
 
   /**
-   * Get full HierarchyRectangularNode by just its id.
-   */
-  static getNodeById(id, root) {
-    // If id matches root.id, we found the node.
-    if (root.id === id) {
-      return root;
-    }
-
-    // Iterate over children.
-    if (root.children) {
-      for (const child of root.children) {
-        const nodeById = Treemap.getNodeById(id, child);
-        if (nodeById) {
-          return nodeById;
-        }
-      }
-    }
-
-    // If not found:
-    return null;
-  }
-
-  /**
    * Get x/y domain set by a HierarchyRectangularNode's properties.
    */
   static getDomainsFromNode = ({ x0, x1, y0, y1 }: HierarchyRectangularNode<any>) => ({
@@ -221,12 +198,32 @@ export default class Treemap extends DoubleClickReactComponent<
   }
 
   /**
+   * Get full HierarchyRectangularNode by just its id.
+   */
+  static getNodeById(id, root) {
+    // If id matches root.id, we found the node.
+    if (root.id === id) {
+      return root;
+    }
+
+    // Iterate over children.
+    if (root.children) {
+      for (const child of root.children) {
+        const nodeById = Treemap.getNodeById(id, child);
+        if (nodeById) {
+          return nodeById;
+        }
+      }
+    }
+
+    // If not found:
+    return null;
+  }
+
+  /**
    * Get current x/y scales.
    */
-  static getScales(
-    props,
-    { xScale, yScale } = DEFAULT_SCALES,
-  ) {
+  static getScales(props, { xScale, yScale } = DEFAULT_SCALES) {
     // Get root node that has been isolated.
     const node = Treemap.getNodeById(props.rootNodeId, props.data);
 
@@ -382,11 +379,11 @@ export default class Treemap extends DoubleClickReactComponent<
     );
   }
 
-  renderTreemap(processedData) {
-    return (
-      <g>{processedData.map(this.renderTreemapCell)}</g>
-    );
-  }
+  renderTreemap = (processedData) => (
+    <g>
+      {processedData.map(this.renderTreemapCell)}
+    </g>
+  )
 
   renderAnimatedTreemap() {
     const {
@@ -403,7 +400,7 @@ export default class Treemap extends DoubleClickReactComponent<
         update={animationProcessor('update')}
         leave={animationProcessor('leave')}
       >
-        {nodes => <g>{nodes.map(this.renderTreemapCell)}</g>}
+        {this.renderTreemap}
      </NodeGroup>);
   }
 
