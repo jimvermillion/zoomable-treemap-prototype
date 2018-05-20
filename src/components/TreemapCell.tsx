@@ -3,20 +3,11 @@ import React from 'react';
 import DoubleClickReactComponent, {
   DoubleClickComponentProps,
 } from '../components/DoubleClickReactComponent';
+import { TreemapFieldAccessors } from '../containers/Treemap';
 import TreemapRectangle from './TreemapRectangle';
 import TreemapText from './TreemapText';
 
 const ATTRIBUTION_OPACITY = 0.5;
-
-interface AttributionFieldAccessors {
-  name: string;
-  fill?: string;
-}
-
-interface TreemapFieldAccessors {
-  label: string;
-  attribution?: AttributionFieldAccessors;
-}
 
 interface TreemapCellProcessedDatum {
   x0: number;
@@ -36,7 +27,7 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   animate?: any;
   attributionFill: string;
   cellFill: string;
-  colorScale?: (input: number | string) => string; // TODO: audit props
+  colorScale?: (input: number | string) => string;
   datum: any;
   defsUrl: string;
   fieldAccessors: TreemapFieldAccessors;
@@ -91,12 +82,11 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
   }
 
   renderText = (datum, dropshadow?) => ((
-    // TODO: this is now a mess. Clarify ...this.props.
     <TreemapText
       key={`text-${datum.id}-${dropshadow}`}
-      {...this.props}
       datum={datum}
       filterDefsUrl={dropshadow}
+      processedDatum={this.props.processedDatum}
       label={this.props.processedDatum.label}
     />
   ))
@@ -104,11 +94,11 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
   attributionWidth = ({ x0, x1 }) => {
     const {
       datum: { data },
-      fieldAccessors: { attribution }, // TODO: ANYTHING THAT NEEDS A PROP RESOLVER, DO IN TREEMAP
+      fieldAccessors: { attribution },
     } = this.props;
 
     if (data[attribution.name]) {
-      const { value } = data[attribution.name];
+      const value = data[attribution.name][attribution.value];
       const cellWidth = x1 - x0;
       return (cellWidth * value);
     }
@@ -207,16 +197,9 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
       </g>
     );
   }
-// TODO: reinstall singular animation work. Both may be the best implementation.
-  render() {
-    const {
-      // datum,
-      processedDatum,
-    } = this.props;
 
-    return this.renderCell(
-      processedDatum,
-      // || TreemapCell.getDatumProcessor(this.props)(datum),
-    );
+  render() {
+    const { processedDatum } = this.props;
+    return this.renderCell(processedDatum);
   }
 }

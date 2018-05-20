@@ -39,8 +39,8 @@ animation:
 * [x] Refactor anything that can be consumed by Treemap.tsx into its own class.
 * [x] Compile a list of everything that we would like to be animated.
 * [x] Use <Animate /> more to figure out exactly how to fine tune animation.
-* [ ] Organize anything that can be animated into a dataProcessor function.
-* [ ] Use react-move <NodeGroup /> that uses the data processor to animate the treemap in the way already established in IHME-UI react-move branches.
+* [x] Organize anything that can be animated into a dataProcessor function.
+* [x] Use react-move <NodeGroup /> that uses the data processor to animate the treemap in the way already established in IHME-UI react-move branches.
 
 zoom logic: 
 * [ ] when at a leaf, zoom out should go to direct parent?
@@ -57,9 +57,8 @@ prototype specific functionality:
 - attribution amount <- independently
 - cell fill color change
 
-### Current notes on animation challenges
-This implementation is ~somewhat~ the equivalent of hard-coding what we want the animation to do. Which is pretty far from the peripheral goal of making the Treemap generic enough for IHME-UI. It would be good to put all animation decisions into a single datum processing function that can be passed to the animation NodeGroup. This will probably require some instance functions to be static class functions so that the Treemap component can get the same results that are currently derived from instance methods. 
-* The datum processor should have an additional map that wraps any animation methods in an array.
-* It may be good to actually return an array with each prop wrapped in an object and an array for (as the animation functions do in ihme-ui).
-* The lower level components could be passed the calculated props, or calc themselves if they are not present.
-* It is becoming more apparent that the data should be first top-filtered to its root node. This could help performance as well as tuning animation since I'm not convinced nodes currently `leave` the dom triggering that animation event.
+### Still TODO:
+* [ ] Don't render attribution if no value is given
+  * [ ] Clean up attribution field accessors
+* [ ] use propResolver where available, streamline what gets fed to components.
+* [ ] Implement selected cells (sort data putting selected cells last) 

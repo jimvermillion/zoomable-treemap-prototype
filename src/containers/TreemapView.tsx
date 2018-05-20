@@ -81,11 +81,19 @@ export default class TreemapView extends React.Component<
       showToDepth,
     } = this.state;
 
+    const fieldAccessors = {
+      label: 'location_name',
+      attribution: {
+        name: 'attribution',
+        value: 'value',
+      }
+    };
+
     return (
       <Treemap
         data={data}
         rootNodeId={rootNodeId}
-        fieldAccessors={{ label: 'location_name', attribution: { name: 'attribution' } }}
+        fieldAccessors={fieldAccessors}
         showToDepth={showToDepth}
         onClick={this.zoomIn}
         onDoubleClick={this.zoomOut}

@@ -43,9 +43,10 @@ const DEFAULT_OPACITY_ANIMATION = {
 interface AttributionFieldAccessors {
   name: string;
   fill?: string;
+  value: string;
 }
 
-interface TreemapFieldAccessors {
+export interface TreemapFieldAccessors {
   label: string;
   attribution?: AttributionFieldAccessors;
 }
@@ -114,9 +115,12 @@ export default class Treemap extends DoubleClickReactComponent<
     strokeWidth: 3,
   };
 
-  static propUpdates = { // TODO: split up processors when we figure out why it was broken
+  /**
+   * Set/update state in IHME-UI Fashion.
+   */
+  static propUpdates = {
     animationProcessor: (acc, _, prevProps, nextProps, state) => {
-      const animationPropNames = [ // TODO: AUDIT THIS LIST
+      const animationPropNames = [
         'animate',
         'data',
         'height',
