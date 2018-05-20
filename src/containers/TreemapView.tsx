@@ -14,7 +14,7 @@ interface TreemapViewState {
   showToDepth: number;
 }
 
-export default class TreemapView extends React.PureComponent<
+export default class TreemapView extends React.Component<
   TreemapViewProps,
   TreemapViewState
 > {
