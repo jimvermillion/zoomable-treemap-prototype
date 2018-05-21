@@ -366,6 +366,7 @@ export default class Treemap extends React.Component<
   }) => {
     const {
       colorScale,
+      doubleClickTiming,
       defsUrl,
       dataAccessors,
       fontPadding,
@@ -393,6 +394,7 @@ export default class Treemap extends React.Component<
         datum={datum}
         defsUrl={defsUrl}
         dataAccessors={dataAccessors}
+        doubleClickTiming={doubleClickTiming}
         fontPadding={fontPadding}
         fontSizeExtent={fontSizeExtent}
         onClick={onClick}
