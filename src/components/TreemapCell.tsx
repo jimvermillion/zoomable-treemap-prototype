@@ -91,14 +91,13 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     />
   ))
 
-  getAttributionWidth = ({ width }) => width * this.props.attributionValue;
-
   renderAttribution = ({
     height,
-    ...processedData,
+    width,
   }: TreemapCellProcessedDatum) => {
     const {
       attributionFill,
+      attributionValue,
       datum,
       onMouseMove,
       onMouseLeave,
@@ -107,6 +106,8 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     } = this.props;
 
     const transformBy = Number(strokeWidth) / 2;
+
+    const attributionWidth = (attributionValue * width) - Number(strokeWidth);
 
     return (
       <TreemapRectangle
@@ -120,7 +121,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
         onMouseOver={onMouseOver}
         opacity={ATTRIBUTION_OPACITY}
         transform={`translate(${transformBy}, ${transformBy})`}
-        width={this.getAttributionWidth(processedData) - Number(strokeWidth)}
+        width={attributionWidth}
       />
     );
   }
