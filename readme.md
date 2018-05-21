@@ -65,3 +65,6 @@ prototype specific functionality:
 * [x] Implement selected cells (sort data putting selected cells last)
 * [ ] Implement onmouseover/hover for focused node.
 * [ ] get rid of `any`s where possible. 
+* [ ] fix bug where label's are not being scaled.
+* [ ] Refactor consumed classes to not call their own static functions?
+* [x] Treemap class does not need to inherit from doubleCLick class.

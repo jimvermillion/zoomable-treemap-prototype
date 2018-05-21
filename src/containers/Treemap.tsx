@@ -22,9 +22,6 @@ import {
   NodeGroup,
 } from 'react-move';
 
-import DoubleClickReactComponent, {
-  DoubleClickComponentProps,
-} from '../components/DoubleClickReactComponent';
 import TreemapCell from '../components/TreemapCell';
 import TreemapText from '../components/TreemapText';
 
@@ -59,11 +56,12 @@ interface LayoutOptions {
   tile: any;
 }
 
-interface TreemapProps extends DoubleClickComponentProps {
+interface TreemapProps {
   animate?: any;
   colorScale?: (input: number | string) => string;
   data: any;
   defsUrl?: string;
+  doubleClickTiming?: number;
   fieldAccessors: TreemapFieldAccessors;
   fontPadding?: number;
   fontSize?: number;
@@ -92,14 +90,13 @@ interface TreemapState {
   yScale: ScaleLinear<number, number>;
 }
 
-export default class Treemap extends DoubleClickReactComponent<
+export default class Treemap extends React.Component<
   TreemapProps,
   TreemapState
 > {
   static defaultProps = {
     animate: DEFAULT_OPACITY_ANIMATION,
     colorScale: scaleOrdinal(schemeCategory10),
-    doubleClickTiming: 250,
     fontPadding: 8,
     fontMargin: 3,
     fontSize: 12,
