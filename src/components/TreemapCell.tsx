@@ -3,7 +3,6 @@ import React from 'react';
 import DoubleClickReactComponent, {
   DoubleClickComponentProps,
 } from '../components/DoubleClickReactComponent';
-import { TreemapDataAccessors } from '../containers/Treemap';
 import TreemapRectangle from './TreemapRectangle';
 import TreemapText from './TreemapText';
 
@@ -15,7 +14,6 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   attributionValue?: number;
   cellFill: string;
   colorScale?: (input: number | string) => string;
-  dataAccessors: TreemapDataAccessors;
   datum: any;
   defsUrl: string;
   fontSize: number;
