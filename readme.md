@@ -58,13 +58,14 @@ prototype specific functionality:
 - cell fill color change
 
 ### Still TODO:
-* [ ] Don't render attribution if no value is given
-  * [ ] Clean up attribution field accessors
+* [x] Don't render attribution if no value is given
+  * [x] Clean up attribution field accessors
 * [ ] use propResolver where available, streamline what gets fed to components.
   * [ ] implement `keyField` rest of common accessors.
 * [x] Implement selected cells (sort data putting selected cells last)
 * [ ] Implement onmouseover/hover for focused node.
 * [ ] get rid of `any`s where possible. 
-* [ ] fix bug where label's are not being scaled.
-* [ ] Refactor consumed classes to not call their own static functions?
+* [x] fix bug where label's are not being scaled.
+* [x] Refactor consumed classes to not call their own static functions.
 * [x] Treemap class does not need to inherit from doubleCLick class.
+* [ ] Filter out any data who is not a descendant of the current root node.
