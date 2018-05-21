@@ -345,13 +345,14 @@ export default class Treemap extends React.PureComponent<
    * Get a function that processes a treemap datum for consumption by a <TreemapText/> component.
    */
   static getTextDatumProcessor(props) {
-    return (datum, processedCellDatum) => {
+    return (datum, { height: boundingHeight, width: boundingWidth }) => {
       // Get the label from the datum.
       const label = datum.data[props.dataAccessors.label];
 
       // Assemble `props` needed by `<TreemapText/>`.
       const textProps = {
-        datum: processedCellDatum,
+        boundingHeight,
+        boundingWidth,
         fontPadding: props.fontPadding,
         fontMargin: props.fontMargin,
         fontSize: props.fontSize,

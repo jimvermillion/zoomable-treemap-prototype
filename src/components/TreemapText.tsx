@@ -45,22 +45,18 @@ export default class TreemapText extends React.PureComponent<TreemapTextProps> {
   })
 
   static sizingProperties = ({
+    boundingHeight,
+    boundingWidth,
     fontPadding,
     fontSize,
     fontSizeExtent,
     label,
-    datum: {
-      x0,
-      x1,
-      y0,
-      y1,
-    },
   }) => {
     const [minValue, maxValue] = fontSizeExtent;
 
-    const x = Math.max(0, Math.floor((x1 - x0) - fontPadding));
+    const x = Math.max(0, Math.floor((boundingWidth) - fontPadding));
 
-    const y = Math.max(0, Math.floor((y1 - y0) - fontPadding));
+    const y = Math.max(0, Math.floor((boundingHeight) - fontPadding));
 
     const width = stringWidth(label, fontSize) / fontSize;
 
