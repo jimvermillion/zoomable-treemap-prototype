@@ -89,7 +89,7 @@ interface TreemapState {
   yScale: ScaleLinear<number, number>;
 }
 
-export default class Treemap extends React.Component<
+export default class Treemap extends React.PureComponent<
   TreemapProps,
   TreemapState
 > {

@@ -19,7 +19,7 @@ interface TreemapTextProps {
   y_translate: number;
 }
 
-export default class TreemapText extends React.Component<TreemapTextProps> {
+export default class TreemapText extends React.PureComponent<TreemapTextProps> {
   static defaultProps = {
     animate: true,
     dropShadowFill: '#000',

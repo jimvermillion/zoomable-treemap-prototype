@@ -11,7 +11,7 @@ export default class DoubleClickReactComponent<
   P extends DoubleClickComponentProps,
   S
 >
-extends React.Component<P, S> {
+extends React.PureComponent<P, S> {
   static defaultProps: DoubleClickComponentProps = {
     doubleClickTiming: 250,
     onClick: noop,
