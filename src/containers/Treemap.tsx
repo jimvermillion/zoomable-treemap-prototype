@@ -119,9 +119,8 @@ export default class Treemap extends React.Component<
    * Set/update state in IHME-UI Fashion.
    */
   static propUpdates = {
-    animationProcessor: (acc, _, prevProps, nextProps, state) => {
+    layout: (acc, _, prevProps, nextProps, state) => {
       const animationPropNames = [
-        'animate',
         'data',
         'height',
         'width',
@@ -138,6 +137,26 @@ export default class Treemap extends React.Component<
 
       // Process data through the treemap layout.
       const treemapData = Treemap.processDataWithLayout(nextProps, layout);
+
+      return {
+        ...acc,
+        layout,
+        treemapData,
+      };
+    },
+    animationProcessor: (acc, _, prevProps, nextProps, state) => {
+      const animationPropNames = [
+        'animate',
+        'data',
+        'height',
+        'width',
+        'rootNodeId',
+        'showToDepth',
+      ];
+
+      if (!propsChanged(prevProps, nextProps, animationPropNames)) {
+        return acc;
+      }
 
       // Get initial x/y scales.
       const scales = Treemap.getScales(nextProps, state);
@@ -157,9 +176,7 @@ export default class Treemap extends React.Component<
         ...acc,
         animationProcessor,
         datumProcessor,
-        layout,
         scales,
-        treemapData,
       };
     },
   };
