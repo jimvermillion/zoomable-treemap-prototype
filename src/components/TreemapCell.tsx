@@ -9,39 +9,35 @@ import TreemapText from './TreemapText';
 
 const ATTRIBUTION_OPACITY = 0.5;
 
-interface TreemapCellProcessedDatum {
-  x0: number;
-  x1: number;
-  y0: number;
-  y1: number;
-  opacity: number;
-  height: number;
-  width: number;
-  label: string;
-  x_translate: number;
-  y_translate: number;
-  rotate: number;
-}
-
 interface TreemapCellProps extends DoubleClickComponentProps {
   animate?: any;
   attributionFill: string;
+  attributionValue?: number;
   cellFill: string;
   colorScale?: (input: number | string) => string;
+  dataAccessors: TreemapDataAccessors;
   datum: any;
   defsUrl: string;
-  dataAccessors: TreemapDataAccessors;
   fontPadding: number;
   fontSizeExtent: [number, number];
+  height: number;
+  label: string;
   onClick: (...args: any[]) => void;
   onDoubleClick: (...args: any[]) => void;
   onMouseLeave: (...args: any[]) => void;
   onMouseMove: (...args: any[]) => void;
   onMouseOver: (...args: any[]) => void;
-  attributionValue?: number;
+  opacity: number;
+  rotate: number;
   stroke: string;
   strokeWidth: number | string;
-  processedDatum: TreemapCellProcessedDatum;
+  width: number;
+  x0: number;
+  x1: number;
+  x_translate: number;
+  y0: number;
+  y1: number;
+  y_translate: number;
 }
 
 export default class TreemapCell
@@ -81,20 +77,28 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     };
   }
 
-  renderText = (datum, dropshadow?) => ((
-    <TreemapText
-      key={`text-${datum.id}-${dropshadow}`}
-      datum={datum}
-      filterDefsUrl={dropshadow}
-      processedDatum={this.props.processedDatum}
-      label={this.props.processedDatum.label}
-    />
-  ))
+  renderText = (datum, dropshadow?) => {
+    const {
+      label,
+      rotate,
+      x_translate,
+      y_translate,
+    } = this.props;
 
-  renderAttribution = ({
-    height,
-    width,
-  }: TreemapCellProcessedDatum) => {
+    return (
+      <TreemapText
+        key={`text-${datum.id}-${dropshadow}`}
+        datum={datum}
+        filterDefsUrl={dropshadow}
+        label={label}
+        rotate={rotate}
+        x_translate={x_translate}
+        y_translate={y_translate}
+      />
+    );
+  }
+
+  renderAttribution = () => {
     const {
       attributionFill,
       attributionValue,
@@ -103,6 +107,8 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
       onMouseLeave,
       onMouseOver,
       strokeWidth,
+      height,
+      width,
     } = this.props;
 
     const transformBy = Number(strokeWidth) / 2;
@@ -126,10 +132,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     );
   }
 
-  renderRect = ({
-    height,
-    width,
-  }) => {
+  renderRect = () => {
     const {
       cellFill,
       datum,
@@ -138,6 +141,8 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
       onMouseOver,
       stroke,
       strokeWidth,
+      height,
+      width,
     } = this.props;
 
     return (
@@ -157,18 +162,15 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     );
   }
 
-  renderCell = (processedDatum) => {
+  render() {
     const {
       datum,
       defsUrl,
       attributionValue,
-    } = this.props;
-
-    const {
       x0,
       y0,
       opacity,
-    } = processedDatum;
+    } = this.props;
 
     return (
       <g
@@ -178,16 +180,11 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
           transform: `translate(${x0}px, ${y0}px)`,
         }}
       >
-        {this.renderRect(processedDatum)}
-        {attributionValue && this.renderAttribution(processedDatum)}
+        {this.renderRect()}
+        {attributionValue && this.renderAttribution()}
         {defsUrl && this.renderText(datum, defsUrl)}
         {this.renderText(datum)}
       </g>
     );
-  }
-
-  render() {
-    const { processedDatum } = this.props;
-    return this.renderCell(processedDatum);
   }
 }

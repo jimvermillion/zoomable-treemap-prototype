@@ -8,12 +8,15 @@ interface TreemapTextProps {
   dropShadowFill?: string;
   fill?: string;
   filterDefsUrl?: string;
-  fontSizeExtent?: [number, number];
   fontMargin?: number;
   fontPadding?: number;
   fontSize?: number;
-  processedDatum?: any;
+  fontSizeExtent?: [number, number];
   label?: string | number;
+  processedDatum?: any;
+  rotate: number;
+  x_translate: number;
+  y_translate: number;
 }
 
 export default class TreemapText extends React.Component<TreemapTextProps> {
@@ -133,17 +136,16 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     return shouldBeVertical ? vertical : horizontal ;
   }
 
-  renderText = ({
-     x_translate,
-     y_translate,
-     rotate,
-     fontSize,
-   }) => {
+  render() {
     const {
-      filterDefsUrl,
-      fill,
       dropShadowFill,
+      fill,
+      filterDefsUrl,
+      fontSize,
       label,
+      rotate,
+      x_translate,
+      y_translate,
     } = this.props;
 
     return (
@@ -157,15 +159,6 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
       >
         {label}
       </text>
-    );
-  }
-
-  render() {
-    const { processedDatum } = this.props;
-
-    return this.renderText(
-      processedDatum
-      || TreemapText.processDatum(this.props),
     );
   }
 }

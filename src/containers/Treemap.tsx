@@ -380,16 +380,9 @@ export default class Treemap extends React.Component<
       strokeWidth,
     } = this.props;
 
-    const {
-      attributionFill,
-      attributionValue,
-    } = processedDatum;
-
     return (
       <TreemapCell
         key={key}
-        attributionFill={attributionFill}
-        attributionValue={attributionValue}
         cellFill={colorScale(datum.data.type)}
         datum={datum}
         defsUrl={defsUrl}
@@ -402,9 +395,9 @@ export default class Treemap extends React.Component<
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}
-        processedDatum={processedDatum}
         stroke={stroke}
         strokeWidth={strokeWidth}
+        {...processedDatum}
       />
     );
   }
