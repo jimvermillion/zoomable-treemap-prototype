@@ -4,7 +4,7 @@ import Treemap from './Treemap';
 
 interface TreemapViewProps {
   data: any;
-  fieldAccessors?: any;
+  dataAccessors?: any;
   height?: number;
   rootNodeId?: number | string;
   width?: number;
@@ -20,11 +20,10 @@ export default class TreemapView extends React.Component<
   TreemapViewState
 > {
   static defaultProps = {
-    fieldAccessors: {
+    dataAccessors: {
       label: 'location_name',
       attribution: {
-        name: 'attribution',
-        value: 'value',
+        value: 'attribution',
       },
     },
   };
@@ -83,7 +82,7 @@ export default class TreemapView extends React.Component<
   render() {
     const {
       data,
-      fieldAccessors,
+      dataAccessors,
       height,
       width,
     } = this.props;
@@ -97,7 +96,7 @@ export default class TreemapView extends React.Component<
       <Treemap
         data={data}
         rootNodeId={rootNodeId}
-        dataAccessors={fieldAccessors}
+        dataAccessors={dataAccessors}
         showToDepth={showToDepth}
         onClick={this.zoomIn}
         onDoubleClick={this.zoomOut}

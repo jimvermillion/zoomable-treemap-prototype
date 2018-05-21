@@ -39,7 +39,6 @@ const DEFAULT_OPACITY_ANIMATION = {
   }),
 };
 
-  name: string;
 interface AttributionDataAccessors {
   fill?: string;
   value: string;
@@ -319,20 +318,17 @@ export default class Treemap extends React.Component<
     };
   }
 
-  static getCellDatumProcessor({ fieldAccessors }, scales) {
+  static getCellDatumProcessor({ dataAccessors: { attribution } }, scales) {
     const cellDatumProcessor = TreemapCell.getDatumProcessor(scales);
 
     return (datum) => {
-      const attributionValue = datum.data[fieldAccessors.attribution.name];
-
-      const attributionFill = ( // TODO Use propResolver?
-        shouldRenderAttribution
-        && datum.data[fieldAccessors.attribution.name][fieldAccessors.attribution.fill]
-      );
+      // Resolve props with datum.
+      const attributionValue = datum.data[attribution.value];
+      const attributionFill = datum.data[attribution.fill];
 
       return {
         attributionFill,
-        shouldRenderAttribution,
+        attributionValue,
         ...cellDatumProcessor(datum),
       };
     };
@@ -385,14 +381,14 @@ export default class Treemap extends React.Component<
 
     const {
       attributionFill,
-      shouldRenderAttribution,
+      attributionValue,
     } = processedDatum;
 
     return (
       <TreemapCell
         key={key}
         attributionFill={attributionFill}
-        shouldRenderAttribution={shouldRenderAttribution}
+        attributionValue={attributionValue}
         cellFill={colorScale(datum.data.type)}
         datum={datum}
         defsUrl={defsUrl}

@@ -38,7 +38,7 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   onMouseLeave: (...args: any[]) => void;
   onMouseMove: (...args: any[]) => void;
   onMouseOver: (...args: any[]) => void;
-  shouldRenderAttribution?: boolean;
+  attributionValue?: number;
   stroke: string;
   strokeWidth: number | string;
   processedDatum: TreemapCellProcessedDatum;
@@ -49,7 +49,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
   static defaultProps = {
     animate: false,
     doubleClickTiming: 250,
-    shouldRenderAttribution: false,
+    attributionValue: false,
   };
 
   static animatable = [
@@ -91,20 +91,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     />
   ))
 
-  attributionWidth = ({ x0, x1 }) => {
-    const {
-      datum: { data },
-      dataAccessors: { attribution },
-    } = this.props;
-
-      const cellWidth = x1 - x0;
-    if (data[attribution.value]) {
-      const value = data[attribution.value];
-      return (cellWidth * value);
-    }
-
-    return 0;
-  }
+  getAttributionWidth = ({ width }) => width * this.props.attributionValue;
 
   renderAttribution = ({
     height,
@@ -133,7 +120,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
         onMouseOver={onMouseOver}
         opacity={ATTRIBUTION_OPACITY}
         transform={`translate(${transformBy}, ${transformBy})`}
-        width={this.attributionWidth(processedData) - Number(strokeWidth)}
+        width={this.getAttributionWidth(processedData) - Number(strokeWidth)}
       />
     );
   }
@@ -173,7 +160,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     const {
       datum,
       defsUrl,
-      shouldRenderAttribution,
+      attributionValue,
     } = this.props;
 
     const {
@@ -191,7 +178,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
         }}
       >
         {this.renderRect(processedDatum)}
-        {shouldRenderAttribution && this.renderAttribution(processedDatum)}
+        {attributionValue && this.renderAttribution(processedDatum)}
         {defsUrl && this.renderText(datum, defsUrl)}
         {this.renderText(datum)}
       </g>
