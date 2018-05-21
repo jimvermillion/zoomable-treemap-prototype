@@ -135,7 +135,7 @@ export default class Treemap extends React.PureComponent<
       const layout = Treemap.getLayout(nextProps, state && state.layout);
 
       // Process data through the treemap layout.
-      const treemapData = Treemap.processDataWithLayout(nextProps, layout);
+      const treemapData = Treemap.layoutData(nextProps, layout);
 
       return {
         ...acc,
@@ -181,40 +181,67 @@ export default class Treemap extends React.PureComponent<
   };
 
   /**
-   * Get x/y domain set by a HierarchyRectangularNode's properties.
+   * Get or update a treemap layout function.
    */
-  static getDomainsFromNode = ({ x0, x1, y0, y1 }: HierarchyRectangularNode<any>) => ({
-    xDomain: [x0, x1],
-    yDomain: [y0, y1],
-  })
+  static getLayout = ({ width, height, ...props }, layout) => {
+    if (layout) {
+      // If a layout already exists, return it with an updated height.
+      return layout.size([width, height]);
+    }
 
-  /**
-   * Get x/y domain and range set from props.
-   */
-  static getDomainsAndRangesFromProps = ({ height, width }: Partial<TreemapProps>) => {
-    const x = [0, width];
-    const y = [0, height];
+    const {
+      padding,
+      round,
+      tile,
+    } = props.layoutOptions;
 
-    return {
-      xDomain: x,
-      xRange: x,
-      yDomain: y,
-      yRange: y,
-    };
+    return treemap()
+      .tile(tile)
+      .round(round)
+      .size([width, height])
+      .padding(padding);
   }
 
   /**
-   * Get domain and range for x/y scales.
+   * Get data laid out in a treemap form.
    */
-  static getDomainsAndRanges(props, rootNode) {
-    // Establish domain and range for `height` and `width`.
-    const domainAndRangeFromProps = Treemap.getDomainsAndRangesFromProps(props);
+  static layoutData({ data, showToDepth, selection }, layout) {
+    const unsorted = layout(data)
+      .descendants()
+      .filter(({ children, depth }) => (
+        // At the current depth
+        depth === showToDepth
+        // or a t a previous depth without children
+        || (depth < showToDepth && !children)
+      ));
 
-    // Get domain for a root node if it exists.
-    const domainFromNode = rootNode ? Treemap.getDomainsFromNode(rootNode) : {};
+    return (
+      selection
+        ? sortBy(data, datum => findIndex(selection, selected => selected.includes(datum.id)))
+        : unsorted
+    );
+  }
 
-    // Override height and width domain/range if root node if present.
-    return { ...domainAndRangeFromProps, ...domainFromNode };
+  /**
+   * Get current x/y scales.
+   */
+  static getScales(props, { xScale, yScale } = DEFAULT_SCALES) {
+    // Get root node that has been isolated.
+    const node = Treemap.getNodeById(props.rootNodeId, props.data);
+
+    // Determine domain and range for x and y.
+    const {
+      xDomain,
+      xRange,
+      yDomain,
+      yRange,
+    } = Treemap.getDomainsAndRanges(props, node);
+
+    // Return object with xScale, yScale properties.
+    return {
+      xScale: xScale.domain(xDomain).range(xRange),
+      yScale: yScale.domain(yDomain).range(yRange),
+    };
   }
 
   /**
@@ -241,63 +268,82 @@ export default class Treemap extends React.PureComponent<
   }
 
   /**
-   * Get current x/y scales.
+   * Get domain and range for x/y scales.
    */
-  static getScales(props, { xScale, yScale } = DEFAULT_SCALES) {
-    // Get root node that has been isolated.
-    const node = Treemap.getNodeById(props.rootNodeId, props.data);
+  static getDomainsAndRanges(props, rootNode) {
+    // Establish domain and range for `height` and `width`.
+    const domainAndRangeFromProps = Treemap.getDomainsAndRangesFromProps(props);
 
-    // Determine domain and range for x and y.
-    const {
-      xDomain,
-      xRange,
-      yDomain,
-      yRange,
-    } = Treemap.getDomainsAndRanges(props, node);
+    // Get domain for a root node if it exists.
+    const domainFromNode = rootNode ? Treemap.getDomainsFromNode(rootNode) : {};
 
-    // Return object with xScale, yScale properties.
+    // Override height and width domain/range if root node if present.
+    return { ...domainAndRangeFromProps, ...domainFromNode };
+  }
+
+  /**
+   * Get x/y domain and range set from props.
+   */
+  static getDomainsAndRangesFromProps = ({ height, width }: Partial<TreemapProps>) => {
+    const x = [0, width];
+    const y = [0, height];
+
     return {
-      xScale: xScale.domain(xDomain).range(xRange),
-      yScale: yScale.domain(yDomain).range(yRange),
+      xDomain: x,
+      xRange: x,
+      yDomain: y,
+      yRange: y,
     };
   }
 
-  static processDataWithLayout({ data, showToDepth, selection }, layout) {
-    const unsorted = layout(data)
-      .descendants()
-      .filter(({ children, depth }) => (
-        // At the current depth
-        depth === showToDepth
-        // or a t a previous depth without children
-        || (depth < showToDepth && !children)
-      ));
+  /**
+   * Get x/y domain set by a HierarchyRectangularNode's properties.
+   */
+  static getDomainsFromNode = ({ x0, x1, y0, y1 }: HierarchyRectangularNode<any>) => ({
+    xDomain: [x0, x1],
+    yDomain: [y0, y1],
+  })
 
-    return (
-      selection
-      ? sortBy(data, datum => findIndex(selection, selected => selected.includes(datum.id)))
-      : unsorted
-    );
+  /**
+   * Get a function that fully processes a treemap datum.
+   */
+  static getDatumProcessor(props, scales) {
+    const cellDatumProcessor = Treemap.getCellDatumProcessor(props, scales);
+    const textDatumProcessor = Treemap.getTextDatumProcessor(props);
+
+    return datum => {
+      // Text processor needs scaled x0, x1, y0, y1.
+      const processedCellDatum = cellDatumProcessor(datum);
+
+      return {
+        ...textDatumProcessor(datum, processedCellDatum),
+        ...processedCellDatum,
+      };
+    };
   }
 
-  static getLayout = ({ width, height, ...props }, layout) => {
-    if (layout) {
-      // If a layout already exists, return it with an updated height.
-      return layout.size([width, height]);
-    }
+  /**
+   * Get a function that processes a treemap datum for consumption by a <TreemapCell/> component.
+   */
+  static getCellDatumProcessor({ dataAccessors: { attribution } }, scales) {
+    const cellDatumProcessor = TreemapCell.getDatumProcessor(scales);
 
-    const {
-      padding,
-      round,
-      tile,
-    } = props.layoutOptions;
+    return (datum) => {
+      // Resolve props with datum.
+      const attributionValue = datum.data[attribution.value];
+      const attributionFill = datum.data[attribution.fill];
 
-    return treemap()
-      .tile(tile)
-      .round(round)
-      .size([width, height])
-      .padding(padding);
+      return {
+        attributionFill,
+        attributionValue,
+        ...cellDatumProcessor(datum),
+      };
+    };
   }
 
+  /**
+   * Get a function that processes a treemap datum for consumption by a <TreemapText/> component.
+   */
   static getTextDatumProcessor(props) {
     return (datum, processedCellDatum) => {
       // Get the label from the datum.
@@ -316,37 +362,6 @@ export default class Treemap extends React.PureComponent<
       return {
         ...TreemapText.processDatum(textProps),
         label,
-      };
-    };
-  }
-
-  static getCellDatumProcessor({ dataAccessors: { attribution } }, scales) {
-    const cellDatumProcessor = TreemapCell.getDatumProcessor(scales);
-
-    return (datum) => {
-      // Resolve props with datum.
-      const attributionValue = datum.data[attribution.value];
-      const attributionFill = datum.data[attribution.fill];
-
-      return {
-        attributionFill,
-        attributionValue,
-        ...cellDatumProcessor(datum),
-      };
-    };
-  }
-
-  static getDatumProcessor(props, scales) {
-    const cellDatumProcessor = Treemap.getCellDatumProcessor(props, scales);
-    const textDatumProcessor = Treemap.getTextDatumProcessor(props);
-
-    return datum => {
-      // Text processor needs scaled x0, x1, y0, y1.
-      const processedCellDatum = cellDatumProcessor(datum);
-
-      return {
-        ...textDatumProcessor(datum, processedCellDatum),
-        ...processedCellDatum,
       };
     };
   }
