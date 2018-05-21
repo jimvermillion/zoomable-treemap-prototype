@@ -97,7 +97,7 @@ export default class TreemapView extends React.Component<
       <Treemap
         data={data}
         rootNodeId={rootNodeId}
-        fieldAccessors={fieldAccessors}
+        dataAccessors={fieldAccessors}
         showToDepth={showToDepth}
         onClick={this.zoomIn}
         onDoubleClick={this.zoomOut}
