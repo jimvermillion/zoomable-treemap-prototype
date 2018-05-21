@@ -299,11 +299,13 @@ export default class Treemap extends React.Component<
   }
 
   static getTextDatumProcessor(props) {
-    return (datum) => {
-      const label = datum.data[props.fieldAccessors.label];
+    return (datum, processedCellDatum) => {
+      // Get the label from the datum.
+      const label = datum.data[props.dataAccessors.label];
 
+      // Assemble `props` needed by `<TreemapText/>`.
       const textProps = {
-        datum,
+        datum: processedCellDatum,
         fontPadding: props.fontPadding,
         fontMargin: props.fontMargin,
         fontSize: props.fontSize,
@@ -335,10 +337,18 @@ export default class Treemap extends React.Component<
   }
 
   static getDatumProcessor(props, scales) {
-    const textDatumProcessor = Treemap.getTextDatumProcessor(props);
     const cellDatumProcessor = Treemap.getCellDatumProcessor(props, scales);
+    const textDatumProcessor = Treemap.getTextDatumProcessor(props);
 
-    return datum => ({ ...textDatumProcessor(datum), ...cellDatumProcessor(datum) });
+    return datum => {
+      // Text processor needs scaled x0, x1, y0, y1.
+      const processedCellDatum = cellDatumProcessor(datum);
+
+      return {
+        ...textDatumProcessor(datum, processedCellDatum),
+        ...processedCellDatum,
+      };
+    };
   }
 
   constructor(props) {

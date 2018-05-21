@@ -18,6 +18,7 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   dataAccessors: TreemapDataAccessors;
   datum: any;
   defsUrl: string;
+  fontSize: number;
   fontPadding: number;
   fontSizeExtent: [number, number];
   height: number;
@@ -79,6 +80,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
 
   renderText = (datum, dropshadow?) => {
     const {
+      fontSize,
       label,
       rotate,
       x_translate,
@@ -88,6 +90,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     return (
       <TreemapText
         key={`text-${datum.id}-${dropshadow}`}
+        fontSize={fontSize}
         datum={datum}
         filterDefsUrl={dropshadow}
         label={label}
