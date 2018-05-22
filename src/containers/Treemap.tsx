@@ -211,7 +211,7 @@ export default class Treemap extends React.PureComponent<
       .filter(({ children, depth }) => (
         // At the current depth
         depth === showToDepth
-        // or a t a previous depth without children
+        // or at a previous depth without children
         || (depth < showToDepth && !children)
       ));
 
