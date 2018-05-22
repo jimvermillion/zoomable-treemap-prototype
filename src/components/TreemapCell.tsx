@@ -76,8 +76,9 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     };
   }
 
-  renderText = (datum, dropshadow?) => {
+  renderText = (dropshadow?) => {
     const {
+      datum,
       fontSize,
       label,
       rotate,
@@ -183,8 +184,8 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
       >
         {this.renderRect()}
         {attributionValue && this.renderAttribution()}
-        {defsUrl && this.renderText(datum, defsUrl)}
-        {this.renderText(datum)}
+        {defsUrl && this.renderText(defsUrl)}
+        {this.renderText()}
       </g>
     );
   }
