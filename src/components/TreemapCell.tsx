@@ -3,7 +3,6 @@ import React from 'react';
 import DoubleClickReactComponent, {
   DoubleClickComponentProps,
 } from '../components/DoubleClickReactComponent';
-import TreemapRectangle from './TreemapRectangle';
 import TreemapText from './TreemapText';
 
 const ATTRIBUTION_OPACITY = 0.5;
@@ -76,6 +75,42 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     };
   }
 
+  constructor(props) {
+    super(props);
+    this.handleClicks = this.handleClicks.bind(this);
+  }
+
+  handleClicks(event) {
+    super.handleClicks(event, this.props.datum, this);
+  }
+
+  onMouseLeave = event => {
+    const {
+      datum,
+      onMouseLeave,
+    } = this.props;
+
+    onMouseLeave(event, datum, this);
+  }
+
+  onMouseMove = event => {
+    const {
+      datum,
+      onMouseMove,
+    } = this.props;
+
+    onMouseMove(event, datum, this);
+  }
+
+  onMouseOver = event => {
+    const {
+      datum,
+      onMouseOver,
+    } = this.props;
+
+    onMouseOver(event, datum, this);
+  }
+
   renderText = (dropshadow?) => {
     const {
       datum,
@@ -88,7 +123,6 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
 
     return (
       <TreemapText
-        key={`text-${datum.id}-${dropshadow}`}
         fontSize={fontSize}
         datum={datum}
         filterDefsUrl={dropshadow}
@@ -104,10 +138,6 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     const {
       attributionFill,
       attributionValue,
-      datum,
-      onMouseMove,
-      onMouseLeave,
-      onMouseOver,
       strokeWidth,
       height,
       width,
@@ -118,18 +148,16 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     const attributionWidth = (attributionValue * width) - Number(strokeWidth);
 
     return (
-      <TreemapRectangle
-        key={`attr-${datum.id}`}
-        data={datum}
+      <rect
         fill={attributionFill}
-        height={height - Number(strokeWidth)}
+        height={Math.max(0, height - Number(strokeWidth))}
         onClick={this.handleClicks}
-        onMouseLeave={onMouseLeave}
-        onMouseMove={onMouseMove}
-        onMouseOver={onMouseOver}
+        onMouseOver={this.onMouseOver}
+        onMouseLeave={this.onMouseLeave}
+        onMouseMove={this.onMouseMove}
         opacity={ATTRIBUTION_OPACITY}
         transform={`translate(${transformBy}, ${transformBy})`}
-        width={attributionWidth}
+        width={Math.max(0, attributionWidth)}
       />
     );
   }
@@ -137,10 +165,6 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
   renderRect = () => {
     const {
       cellFill,
-      datum,
-      onMouseMove,
-      onMouseLeave,
-      onMouseOver,
       stroke,
       strokeWidth,
       height,
@@ -148,18 +172,16 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     } = this.props;
 
     return (
-      <TreemapRectangle
-        data={datum}
-        key={`rect-${datum.id}`}
+      <rect
         fill={cellFill}
-        strokeWidth={strokeWidth}
-        stroke={stroke}
-        width={width}
-        height={height}
+        height={Math.max(0, height)}
         onClick={this.handleClicks}
-        onMouseOver={onMouseOver}
-        onMouseLeave={onMouseLeave}
-        onMouseMove={onMouseMove}
+        onMouseLeave={this.onMouseLeave}
+        onMouseMove={this.onMouseMove}
+        onMouseOver={this.onMouseOver}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        width={Math.max(0, width)}
       />
     );
   }
