@@ -39,11 +39,11 @@ extends React.PureComponent<P, S> {
     this.clearAndNullTimeout();
   }
 
-  handleClicks = (
+  handleClicks(
     event,
     data,
     component,
-  ) => {
+  ) {
     if (this.clickTimeout !== null) {
       this.onDoubleClick(event, data, component);
     } else {
