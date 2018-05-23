@@ -26,7 +26,7 @@ zoom:
 * [x] Adding event handlers would be necessary and it would be smart to handle them here, including double-click.
 
 possible performance enhancements:
-* [ ] filtering data is also an option. Could filter by only the descendants of zoomed node whose `depth` is less than that of `showToDepth`.
+* [x] filtering data is also an option. Could filter by only the descendants of zoomed node whose `depth` is less than that of `showToDepth`.
 
 attribution:
 * [x] how does Evan do it?
@@ -35,12 +35,37 @@ attribution:
     * [x] implement it.
     
 animation:
-* [x] Investigate if using <Animate /> would make more sense. NAIVE, NodeGroup makes more sense.
+* [x] Investigate if using <Animate /> would make sense.
 * [x] Refactor anything that can be consumed by Treemap.tsx into its own class.
-* [ ] Compile a list of everything that we would like to be animated.
-* [ ] Organize anything that can be animated into a dataProcessor function.
-* [ ] Use react-move <NodeGroup /> with a start & update function that uses the data processor to animate the treemap.
+* [x] Compile a list of everything that we would like to be animated.
+* [x] Use <Animate /> more to figure out exactly how to fine tune animation.
+* [x] Organize anything that can be animated into a dataProcessor function.
+* [x] Use react-move <NodeGroup /> that uses the data processor to animate the treemap in the way already established in IHME-UI react-move branches.
+
+zoom logic: 
+* [ ] when at a leaf, zoom out should go to direct parent?
 
 prototype specific functionality:
 * [ ] UI element such as a slider to control depth/breakdown
 * [x] click to zoom
+
+## Animation notes:
+### List of things one might want to animate:
+- x0, x1, y0, y1 of the cells
+- Text size/rotation
+- Introduction of child cells
+- attribution amount <- independently
+- cell fill color change
+
+### Still TODO:
+* [x] Don't render attribution if no value is given
+  * [x] Clean up attribution field accessors
+* [ ] use propResolver where available, streamline what gets fed to components.
+  * [ ] implement `keyField` rest of common accessors.
+* [x] Implement selected cells (sort data putting selected cells last)
+* [ ] Implement onmouseover/hover for focused node.
+* [ ] get rid of `any`s where possible. 
+* [x] fix bug where label's are not being scaled.
+* [x] Refactor consumed classes to not call their own static functions.
+* [x] Treemap class does not need to inherit from doubleCLick class.
+* [ ] Filter out any data who is not a descendant of the current root node.

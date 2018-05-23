@@ -1,22 +1,27 @@
-import { max } from 'd3-array';
 import React from 'react';
 
 import { stringWidth } from '../utils';
 
 interface TreemapTextProps {
+  animate?: boolean;
   datum: any;
   dropShadowFill?: string;
   fill?: string;
   filterDefsUrl?: string;
-  fontSizeExtent?: [number, number];
   fontMargin?: number;
   fontPadding?: number;
   fontSize?: number;
+  fontSizeExtent?: [number, number];
   label?: string | number;
+  processedDatum?: any;
+  rotate: number;
+  x_translate: number;
+  y_translate: number;
 }
 
-export default class TreemapText extends React.Component<TreemapTextProps> {
+export default class TreemapText extends React.PureComponent<TreemapTextProps> {
   static defaultProps = {
+    animate: true,
     dropShadowFill: '#000',
     fill: '#fff',
     filterDefsUrl: '',
@@ -27,19 +32,31 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     label: '',
   };
 
-  sizingProperties = d => {
-    const {
-      fontPadding,
-      fontSize,
-      fontSizeExtent,
-      label,
-    } = this.props;
+  static animatable = [
+    'x_translate',
+    'y_translate',
+    'rotate',
+    'fontSize',
+  ];
 
+  static processDatum = (props) => ({
+    ...TreemapText.fontDirection(props),
+    fontSize: TreemapText.fontSize(props),
+  })
+
+  static sizingProperties = ({
+    boundingHeight,
+    boundingWidth,
+    fontPadding,
+    fontSize,
+    fontSizeExtent,
+    label,
+  }) => {
     const [minValue, maxValue] = fontSizeExtent;
 
-    const x = max([0, Math.floor((d.x1 - d.x0) - fontPadding)]);
+    const x = Math.max(0, Math.floor((boundingWidth) - fontPadding));
 
-    const y = max([0, Math.floor((d.y1 - d.y0) - fontPadding)]);
+    const y = Math.max(0, Math.floor((boundingHeight) - fontPadding));
 
     const width = stringWidth(label, fontSize) / fontSize;
 
@@ -60,7 +77,7 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     };
   }
 
-  fontSize = d => {
+  static fontSize = (props) => {
     const {
       x,
       y,
@@ -68,7 +85,7 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
       shouldBeVertical,
       minValue,
       maxValue,
-    } = this.sizingProperties(d);
+    } = TreemapText.sizingProperties(props);
 
     let size;
 
@@ -93,37 +110,47 @@ export default class TreemapText extends React.Component<TreemapTextProps> {
     return size;
   }
 
-  fontDirection = d => {
-    const { fontMargin } = this.props;
+  static fontDirection = (props) => {
+    const { fontMargin } = props;
 
-    const { shouldBeVertical } = this.sizingProperties(d);
+    const { shouldBeVertical } = TreemapText.sizingProperties(props);
 
-    const labelSize = this.fontSize(d);
+    const labelSize = TreemapText.fontSize(props);
 
-    const horizontal = `translate(${fontMargin}px, ${labelSize}px) rotate(0)`;
+    const horizontal = {
+      x_translate: fontMargin,
+      y_translate: labelSize,
+      rotate: 0,
+    };
 
-    const vertical = `translate(${labelSize / fontMargin}px, ${fontMargin}px) rotate(90deg)`;
+    const vertical = {
+      x_translate: labelSize / fontMargin,
+      y_translate: fontMargin,
+      rotate: 90,
+    };
 
     return shouldBeVertical ? vertical : horizontal ;
   }
 
   render() {
     const {
-      datum,
-      filterDefsUrl,
-      fill,
       dropShadowFill,
+      fill,
+      filterDefsUrl,
+      fontSize,
       label,
+      rotate,
+      x_translate,
+      y_translate,
     } = this.props;
 
     return (
       <text
         fill={filterDefsUrl ? dropShadowFill : fill}
         filter={filterDefsUrl}
-        key={`text-${datum.id}-${filterDefsUrl}`}
         style={{
-          fontSize: this.fontSize(datum),
-          transform: this.fontDirection(datum),
+          fontSize: fontSize as number,
+          transform: `translate(${x_translate}px, ${y_translate}px) rotate(${rotate}deg)`,
         }}
       >
         {label}

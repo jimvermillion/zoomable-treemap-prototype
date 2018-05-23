@@ -1,6 +1,4 @@
 import React from 'react';
-import { Transition } from 'react-move';
-import Animate from 'react-move/animate';
 
 interface RectangleProps {
   data: any;
@@ -17,7 +15,7 @@ interface RectangleProps {
   transform?: string;
 }
 
-export default class Rectangle extends React.PureComponent<RectangleProps> {
+export default class TreemapRectangle extends React.PureComponent<RectangleProps> {
   static defaultProps: Partial<RectangleProps> = {
     stroke: null,
     strokeWidth: null,
@@ -61,63 +59,28 @@ export default class Rectangle extends React.PureComponent<RectangleProps> {
     onMouseOver(event, data, this);
   }
 
-  renderRect = ({
-    fill,
-    strokeWidth,
-    stroke,
-    width,
-    height,
-    transform,
-    opacity,
-  }: Partial<RectangleProps>) => {
+  render() {
+    const {
+       fill,
+       strokeWidth,
+       stroke,
+       width,
+       height,
+       transform,
+       opacity,
+     } = this.props;
+
     return (
       <rect
         transform={transform}
         fill={fill}
         strokeWidth={strokeWidth}
         stroke={stroke}
-        width={width}
-        height={height}
+        width={Math.max(0, width)}
+        height={Math.max(0, height)}
         opacity={opacity}
         onClick={this.onClick}
       />
-    );
-  }
-
-  render() {
-    const {
-      fill,
-      strokeWidth,
-      stroke,
-      width,
-      height,
-      transform,
-      opacity,
-    } = this.props;
-
-    return (
-      <Animate
-        start={{
-          fill,
-          strokeWidth,
-          stroke,
-          width,
-          height,
-          transform,
-          opacity,
-        }}
-        update={{
-          fill: [fill],
-          strokeWidth: [strokeWidth],
-          stroke: [stroke],
-          width: [width],
-          height: [height],
-          transform: [transform],
-          opacity: [opacity],
-        } as Transition}
-      >
-        {this.renderRect}
-      </Animate>
     );
   }
 }

@@ -1,116 +1,161 @@
-import { ScaleLinear } from 'd3-scale';
 import React from 'react';
 
-import DoubleClickReactComponent, { DoubleClickComponentProps } from '../components/DoubleClickReactComponent';
-import Rectangle from './Rectangle';
+import DoubleClickReactComponent, {
+  DoubleClickComponentProps,
+} from '../components/DoubleClickReactComponent';
+import TreemapRectangle from './TreemapRectangle';
 import TreemapText from './TreemapText';
 
 const ATTRIBUTION_OPACITY = 0.5;
 
-interface AttributionFieldAccessors {
-  name: string;
-  fill?: string;
-}
-
-interface TreemapFieldAccessors {
-  label: string;
-  attribution?: AttributionFieldAccessors;
-}
-
 interface TreemapCellProps extends DoubleClickComponentProps {
-  colorScale: (input: number | string) => string;
+  animate?: any;
+  attributionFill: string;
+  attributionValue?: number;
+  cellFill: string;
+  colorScale?: (input: number | string) => string;
   datum: any;
   defsUrl: string;
-  fieldAccessors: TreemapFieldAccessors;
+  fontSize: number;
+  fontPadding: number;
+  fontSizeExtent: [number, number];
+  height: number;
+  label: string;
   onClick: (...args: any[]) => void;
   onDoubleClick: (...args: any[]) => void;
   onMouseLeave: (...args: any[]) => void;
   onMouseMove: (...args: any[]) => void;
   onMouseOver: (...args: any[]) => void;
+  opacity: number;
+  rotate: number;
   stroke: string;
   strokeWidth: number | string;
-  xScale: ScaleLinear<number, number>;
-  yScale: ScaleLinear<number, number>;
+  width: number;
+  x0: number;
+  x1: number;
+  x_translate: number;
+  y0: number;
+  y1: number;
+  y_translate: number;
 }
 
 export default class TreemapCell
 extends DoubleClickReactComponent<TreemapCellProps, {}> {
-  renderText = (datum, dropshadow?) => ((
-    <TreemapText
-      key={`text-${datum.id}-${dropshadow}`}
-      datum={datum}
-      filterDefsUrl={dropshadow}
-      label={datum.data[this.props.fieldAccessors.label]}
-    />
-  ))
+  static defaultProps = {
+    animate: false,
+    doubleClickTiming: 250,
+    attributionValue: false,
+  };
 
-  attributionWidth = ({ data, x1, x0 }) => {
-    const {
-      fieldAccessors: { attribution },
-      xScale,
-    } = this.props;
+  static animatable = [
+    'x0',
+    'x1',
+    'y0',
+    'y1',
+    'opacity',
+    'height',
+    'width',
+  ];
 
-    if (data[attribution.name]) {
-      const {value} = data[attribution.name];
-      const cellWidth = xScale(x1) - xScale(x0);
-      return (cellWidth * value);
-    }
+  static getDatumProcessor({ xScale, yScale }) {
+    return (datum) => {
+      const x0 = xScale(datum.x0);
+      const x1 = xScale(datum.x1);
+      const y0 = yScale(datum.y0);
+      const y1 = yScale(datum.y1);
 
-    return 0;
+      return {
+        x0,
+        x1,
+        y0,
+        y1,
+        opacity: 0,
+        height: y1 - y0,
+        width: x1 - x0,
+      };
+    };
   }
 
-  renderAttribution = d => {
+  renderText = (dropshadow?) => {
     const {
+      datum,
+      fontSize,
+      label,
+      rotate,
+      x_translate,
+      y_translate,
+    } = this.props;
+
+    return (
+      <TreemapText
+        key={`text-${datum.id}-${dropshadow}`}
+        fontSize={fontSize}
+        datum={datum}
+        filterDefsUrl={dropshadow}
+        label={label}
+        rotate={rotate}
+        x_translate={x_translate}
+        y_translate={y_translate}
+      />
+    );
+  }
+
+  renderAttribution = () => {
+    const {
+      attributionFill,
+      attributionValue,
+      datum,
       onMouseMove,
       onMouseLeave,
       onMouseOver,
       strokeWidth,
-      fieldAccessors: {attribution: {name: attributionName, fill: attributionFill}},
-      yScale,
+      height,
+      width,
     } = this.props;
-
-    const fill = d.data[attributionName] && d.data[attributionName][attributionFill];
 
     const transformBy = Number(strokeWidth) / 2;
 
+    const attributionWidth = (attributionValue * width) - Number(strokeWidth);
+
     return (
-      <Rectangle
-        key={`attr-${d.id}`}
-        data={d}
-        fill={fill}
-        height={yScale(d.y1) - yScale(d.y0) - Number(strokeWidth)}
+      <TreemapRectangle
+        key={`attr-${datum.id}`}
+        data={datum}
+        fill={attributionFill}
+        height={height - Number(strokeWidth)}
         onClick={this.handleClicks}
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}
         opacity={ATTRIBUTION_OPACITY}
         transform={`translate(${transformBy}, ${transformBy})`}
-        width={this.attributionWidth(d) - Number(strokeWidth)}
+        width={attributionWidth}
       />
     );
   }
 
-  renderRect = d => {
+  renderRect = () => {
     const {
-      colorScale,
+      cellFill,
+      datum,
       onMouseMove,
       onMouseLeave,
       onMouseOver,
       stroke,
       strokeWidth,
-      xScale,
-      yScale,
+      height,
+      width,
     } = this.props;
 
     return (
-      <Rectangle
-        data={d}
-        key={`rect-${d.id}`}
-        fill={colorScale(d.data.type)}
+      <TreemapRectangle
+        data={datum}
+        key={`rect-${datum.id}`}
+        fill={cellFill}
         strokeWidth={strokeWidth}
         stroke={stroke}
-        width={xScale(d.x1) - xScale(d.x0)}
-        height={yScale(d.y1) - yScale(d.y0)}
+        width={width}
+        height={height}
         onClick={this.handleClicks}
         onMouseOver={onMouseOver}
         onMouseLeave={onMouseLeave}
@@ -123,19 +168,24 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     const {
       datum,
       defsUrl,
-      fieldAccessors: { attribution },
-      xScale,
-      yScale,
+      attributionValue,
+      x0,
+      y0,
+      opacity,
     } = this.props;
 
     return (
       <g
-        style={{transform: `translate(${xScale(datum.x0)}px, ${yScale(datum.y0)}px)`}}
+        key={`cell-${datum.id}`}
+        style={{
+          opacity: opacity as number,
+          transform: `translate(${x0}px, ${y0}px)`,
+        }}
       >
-        {this.renderRect(datum)}
-        {(datum.data[attribution.name]) ? this.renderAttribution(datum) : null}
-        {defsUrl && this.renderText(datum, defsUrl)}
-        {this.renderText(datum)}
+        {this.renderRect()}
+        {attributionValue && this.renderAttribution()}
+        {defsUrl && this.renderText(defsUrl)}
+        {this.renderText()}
       </g>
     );
   }
