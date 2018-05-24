@@ -68,4 +68,4 @@ prototype specific functionality:
 * [x] fix bug where label's are not being scaled.
 * [x] Refactor consumed classes to not call their own static functions.
 * [x] Treemap class does not need to inherit from doubleCLick class.
-* [ ] Filter out any data who is not a descendant of the current root node.
+* [x] Filter out any data who is not a descendant of the current root node.

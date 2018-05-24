@@ -211,21 +211,39 @@ export default class Treemap extends React.PureComponent<
   /**
    * Get data laid out in a treemap form.
    */
-  static layoutData({ data, showToDepth, selection }, layout) {
-    const unsorted = layout(data)
-      .descendants()
-      .filter(({ children, depth }) => (
-        // At the current depth
-        depth === showToDepth
+  static layoutData({ data, showToDepth, rootNodeId, selection }, layout) {
+    const unsorted = layout(data).descendants();
+
+    const filtered = unsorted.filter(({ children, depth, ...node }) => (
+      // At the current depth
+      (depth === showToDepth
         // or at a previous depth without children
-        || (depth < showToDepth && !children)
-      ));
+        || (depth < showToDepth && !children))
+      && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
+    ));
 
     return (
       selection
-        ? sortBy(data, datum => findIndex(selection, selected => selected.includes(datum.id)))
-        : unsorted
+        ? sortBy(filtered, datum => findIndex(selection, selected => selected.includes(datum.id)))
+        : filtered
     );
+  }
+
+  static nodeHasRootAsAncestor(rootNodeId, node) {
+    // If no active root node, do not exclude.
+    if (!rootNodeId) {
+      return true;
+    }
+    // If `node` is the root node, return true.
+    if (node.id === rootNodeId) {
+      return true;
+    }
+    // If we've reaced the base of the hierarchy without finding the root return false
+    if (!node.parent) {
+      return false;
+    }
+    // recur.
+    return Treemap.nodeHasRootAsAncestor(rootNodeId, node.parent);
   }
 
   /**
