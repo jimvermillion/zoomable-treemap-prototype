@@ -149,8 +149,10 @@ export default class TreemapText extends React.PureComponent<TreemapTextProps> {
         fill={filterDefsUrl ? dropShadowFill : fill}
         filter={filterDefsUrl}
         style={{
+          cursor: 'default',
           fontSize: fontSize as number,
           transform: `translate(${x_translate}px, ${y_translate}px) rotate(${rotate}deg)`,
+          userSelect: 'none',
         }}
       >
         {label}
