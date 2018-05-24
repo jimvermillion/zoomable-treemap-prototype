@@ -32,11 +32,17 @@ const DEFAULT_SCALES = {
   yScale: scaleLinear(),
 };
 
+const OPACITY_ANIMATION = () => ({
+  opacity: [1],
+  timing: { delay: 333 },
+});
+
 const DEFAULT_OPACITY_ANIMATION = {
-  opacity: () => ({
-    opacity: [1],
-    timing: { delay: 333 },
-  }),
+  opacity: {
+    enter: OPACITY_ANIMATION,
+    update: OPACITY_ANIMATION,
+    leave: () => ({ opacity: [0], timing: { duration: 666 } }),
+  },
 };
 
 interface AttributionDataAccessors {
