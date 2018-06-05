@@ -82,11 +82,12 @@ interface TreemapProps {
   onMouseMove?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
   rootNodeId?: number | string;
-  selectedStyle?: any; // TODO: what types are style in geo-app?
+  selectedStyle?: React.CSSProperties;
   selection?: number[] | string[];
   showToDepth: number;
   stroke?: string;
   strokeWidth?: number | string;
+  style?: React.CSSProperties;
   width: number;
 }
 

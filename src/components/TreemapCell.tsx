@@ -36,10 +36,10 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   opacity: number;
   rotate: number;
   selected: boolean;
-  selectedStyle?: any;
+  selectedStyle?: React.CSSProperties;
   stroke: string;
   strokeWidth: number | string;
-  style?: any;
+  style?: React.CSSProperties;
   width: number;
   x0: number;
   x1: number;
@@ -50,7 +50,7 @@ interface TreemapCellProps extends DoubleClickComponentProps {
 }
 
 interface TreemapCellState {
-  style: any;
+  style: React.CSSProperties;
 }
 
 export default class TreemapCell
