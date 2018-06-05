@@ -107,7 +107,6 @@ export default class Treemap extends React.PureComponent<
   static defaultProps = {
     animate: DEFAULT_OPACITY_ANIMATION,
     colorScale: scaleOrdinal(schemeCategory10),
-    focusedStyle: { stroke: 'red' },
     fontPadding: 8,
     fontMargin: 3,
     fontSize: 12,
@@ -121,7 +120,6 @@ export default class Treemap extends React.PureComponent<
     onMouseOver: noop,
     onMouseLeave: noop,
     onMouseMove: noop,
-    selectedStyle: { stroke: 'green' },
     showToDepth: 1,
     stroke: '#fff',
     strokeWidth: 3,

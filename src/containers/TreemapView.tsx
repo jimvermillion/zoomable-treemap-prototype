@@ -17,6 +17,10 @@ interface TreemapViewState {
   showToDepth: number;
 }
 
+// Basic focused/selected styles for development.
+const FOCUSED_STYLE = { stroke: 'red' };
+const SELECTED_STYLE = { stroke: 'green' };
+
 export default class TreemapView extends React.PureComponent<
   TreemapViewProps,
   TreemapViewState
@@ -126,12 +130,14 @@ export default class TreemapView extends React.PureComponent<
         rootNodeId={rootNodeId}
         dataAccessors={dataAccessors}
         focused={focused}
+        focusedStyle={FOCUSED_STYLE}
         showToDepth={showToDepth}
         onClick={this.zoomIn}
         onDoubleClick={this.zoomOut}
         onMouseOver={this.onMouseOver}
         defsUrl="url(#dropshadow)"
         selection={selection}
+        selectedStyle={SELECTED_STYLE}
         height={height}
         width={width}
       />
