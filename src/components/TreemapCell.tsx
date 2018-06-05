@@ -1,3 +1,4 @@
+import includes from 'lodash-es/includes';
 import React from 'react';
 
 import DoubleClickReactComponent, {
@@ -27,6 +28,7 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   onMouseOver: (...args: any[]) => void;
   opacity: number;
   rotate: number;
+  selection?: number[] | string[];
   stroke: string;
   strokeWidth: number | string;
   width: number;
@@ -165,11 +167,17 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
   renderRect = () => {
     const {
       cellFill,
+      datum,
+      selection,
       stroke,
       strokeWidth,
       height,
       width,
     } = this.props;
+
+    // TODO: DO THIS `combineStyles` a la IHME-UI `Shape`
+    const isSelected = includes(selection, datum.id);
+    const style = isSelected ? { stroke: 'red' } : {};
 
     return (
       <rect
@@ -181,6 +189,7 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
         onMouseOver={this.onMouseOver}
         stroke={stroke}
         strokeWidth={strokeWidth}
+        style={style}
         width={Math.max(0, width)}
       />
     );

@@ -100,6 +100,10 @@ export default class TreemapView extends React.PureComponent<
     });
   }
 
+  onMouseOver = (_, node) => { // enter/leave
+    this.setState({ selection: [node.id] });
+  }
+
   render() {
     const {
       data,
@@ -110,6 +114,7 @@ export default class TreemapView extends React.PureComponent<
 
     const {
       rootNodeId,
+      selection,
       showToDepth,
     } = this.state;
 
@@ -121,7 +126,9 @@ export default class TreemapView extends React.PureComponent<
         showToDepth={showToDepth}
         onClick={this.zoomIn}
         onDoubleClick={this.zoomOut}
+        onMouseOver={this.onMouseOver}
         defsUrl="url(#dropshadow)"
+        selection={selection}
         height={height}
         width={width}
       />

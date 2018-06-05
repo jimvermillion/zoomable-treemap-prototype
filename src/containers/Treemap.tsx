@@ -223,11 +223,8 @@ export default class Treemap extends React.PureComponent<
       && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
     ));
 
-    return (
-      selection
-        ? sortBy(filtered, datum => findIndex(selection, selected => selected.includes(datum.id)))
-        : filtered
-    );
+    // Sort the data, leaving any selected Ids on top of treemap.
+    return sortBy(filtered, datum => findIndex(selection, select => select === datum.id));
   }
 
   static nodeHasRootAsAncestor(rootNodeId, node) {
