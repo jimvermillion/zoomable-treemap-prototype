@@ -198,7 +198,7 @@ export default class Treemap extends React.PureComponent<
   /**
    * Get or update a treemap layout function.
    */
-  static getLayout = ({ width, height, ...props }, layout) => {
+  static getLayout = ({ width, height, layoutOptions }, layout) => {
     if (layout) {
       // If a layout already exists, return it with an updated height.
       return layout.size([width, height]);
@@ -208,7 +208,7 @@ export default class Treemap extends React.PureComponent<
       padding,
       round,
       tile,
-    } = props.layoutOptions;
+    } = layoutOptions;
 
     return treemap()
       .tile(tile)
@@ -255,7 +255,7 @@ export default class Treemap extends React.PureComponent<
     if (node.id === rootNodeId) {
       return true;
     }
-    // If we've reaced the base of the hierarchy without finding the root return false
+    // If we've reached the base of the hierarchy without finding the root, return false.
     if (!node.parent) {
       return false;
     }
