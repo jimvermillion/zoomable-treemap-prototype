@@ -100,7 +100,8 @@ interface TreemapState {
   yScale: ScaleLinear<number, number>;
 }
 
-export default class Treemap extends React.PureComponent<
+export default class Treemap
+extends React.PureComponent<
   TreemapProps,
   TreemapState
 > {
@@ -125,70 +126,78 @@ export default class Treemap extends React.PureComponent<
     strokeWidth: 3,
   };
 
+  static dataPropNames = [
+    'animate',
+    'data',
+    'focused',
+    'height',
+    'width',
+    'rootNodeId',
+    'showToDepth',
+    'selection',
+  ];
+
   /**
    * Set/update state in IHME-UI Fashion.
    */
   static propUpdates = {
     layout: (acc, _, prevProps, nextProps, state) => {
-      const animationPropNames = [
-        'data',
-        'focused',
-        'height',
-        'width',
-        'rootNodeId',
-        'showToDepth',
-        'selection',
-      ];
-
-      if (!propsChanged(prevProps, nextProps, animationPropNames)) {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
-
-      // Get the `treemap` layout.
-      const layout = Treemap.getLayout(nextProps, state && state.layout);
-
-      // Process data through the treemap layout.
-      const treemapData = Treemap.layoutData(nextProps, layout);
-
+      // Initialize/update treemap-layout function.
       return {
         ...acc,
-        layout,
-        treemapData,
+        layout: Treemap.getLayout(nextProps, state && state.layout),
       };
     },
-    animationProcessor: (acc, _, prevProps, nextProps, state) => {
-      const animationPropNames = [
-        'animate',
-        'data',
-        'height',
-        'width',
-        'rootNodeId',
-        'showToDepth',
-      ];
-
-      if (!propsChanged(prevProps, nextProps, animationPropNames)) {
+    treemapData: (acc, _, prevProps, nextProps) => {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
+        return acc;
+      }
+      // Process data through the treemap layout.
+      return {
+        ...acc,
+        treemapData: Treemap.layoutData(nextProps, acc.layout),
+      };
+    },
+    scales: (acc, _, prevProps, nextProps, state) => {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
+        return acc;
+      }
+      // Get initial x/y scales.
+      return {
+        ...acc,
+        scales: Treemap.getScales(nextProps, state),
+      };
+    },
+    datumProcessor: (acc, _, prevProps, nextProps) => {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
 
-      // Get initial x/y scales.
-      const scales = Treemap.getScales(nextProps, state);
-
       // Establish data processor.
-      const datumProcessor = Treemap.getDatumProcessor(nextProps, scales);
+      return {
+        ...acc,
+        datumProcessor: Treemap.getDatumProcessor(nextProps, acc.scales),
+      };
+    },
+    animationProcessor: (acc, _, prevProps, nextProps) => {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
+        return acc;
+      }
 
       // Get animation processor.
       const animationProcessor = partial(
         animationProcessorFactory,
         nextProps.animate,
         [...TreemapCell.animatable, ...TreemapText.animatable],
-        datumProcessor,
+        acc.datumProcessor,
       );
 
       return {
         ...acc,
         animationProcessor,
-        datumProcessor,
-        scales,
       };
     },
   };
