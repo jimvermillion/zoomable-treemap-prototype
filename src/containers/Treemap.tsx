@@ -217,8 +217,8 @@ export default class Treemap extends React.PureComponent<
     const filtered = unsorted.filter(({ children, depth, ...node }) => (
       // At the current depth
       (depth === showToDepth
-        // or at a previous depth without children
-        || (depth < showToDepth && !children))
+      // or at a previous depth without children
+      || (depth < showToDepth && !children))
       && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
     ));
 
