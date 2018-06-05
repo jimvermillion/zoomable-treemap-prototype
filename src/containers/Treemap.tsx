@@ -1,6 +1,8 @@
 import {
+  HierarchyNode,
   HierarchyRectangularNode,
   treemap,
+  TreemapLayout,
   treemapResquarify,
 } from 'd3-hierarchy';
 import {
@@ -19,13 +21,16 @@ import noop from 'lodash-es/noop';
 import partial from 'lodash-es/partial';
 import sortBy from 'lodash-es/sortBy';
 import React from 'react';
-import {
-  NodeGroup,
-} from 'react-move';
+import { NodeGroup } from 'react-move';
 
 import TreemapCell from '../components/TreemapCell';
 import TreemapText from '../components/TreemapText';
 
+import {
+  AnimateProp,
+  AnimationProcessor,
+  DatumProcessor,
+} from '../types';
 import { animationProcessorFactory } from '../utils';
 
 const DEFAULT_SCALES = {
@@ -62,10 +67,20 @@ interface LayoutOptions {
   tile: any;
 }
 
+interface RawTreemapDatum {
+  [key: string]: any;
+}
+
+type TreemapEventHandler = (
+  event: React.MouseEvent<any>,
+  data: RawTreemapDatum,
+  component: TreemapCell,
+) => void;
+
 interface TreemapProps {
-  animate?: any;
+  animate?: AnimateProp;
   colorScale?: (input: number | string) => string;
-  data: any;
+  data: HierarchyNode<RawTreemapDatum>;
   defsUrl?: string;
   doubleClickTiming?: number;
   dataAccessors: TreemapDataAccessors;
@@ -76,12 +91,12 @@ interface TreemapProps {
   fontSizeExtent?: [number, number];
   height: number;
   layoutOptions?: LayoutOptions;
-  onClick?: (...args: any[]) => void;
-  onDoubleClick?: (...args: any[]) => void;
-  onMouseEnter?: (...args: any[]) => void;
-  onMouseLeave?: (...args: any[]) => void;
-  onMouseMove?: (...args: any[]) => void;
-  onMouseOver?: (...args: any[]) => void;
+  onClick?: TreemapEventHandler;
+  onDoubleClick?: TreemapEventHandler;
+  onMouseEnter?: TreemapEventHandler;
+  onMouseLeave?: TreemapEventHandler;
+  onMouseMove?: TreemapEventHandler;
+  onMouseOver?: TreemapEventHandler;
   rootNodeId?: number | string;
   selectedStyle?: React.CSSProperties;
   selection?: number[] | string[];
@@ -93,10 +108,10 @@ interface TreemapProps {
 }
 
 interface TreemapState {
-  animationProcessor: any;
-  datumProcessor: any;
-  layout: any;
-  treemapData: any;
+  animationProcessor: AnimationProcessor;
+  datumProcessor: DatumProcessor;
+  layout: TreemapLayout<RawTreemapDatum>;
+  treemapData: Array<HierarchyRectangularNode<RawTreemapDatum>>;
   xScale: ScaleLinear<number, number>;
   yScale: ScaleLinear<number, number>;
 }
@@ -128,6 +143,7 @@ extends React.PureComponent<
     strokeWidth: 3,
   };
 
+  // Common prop names for Treemap.propUpdates to compare `props`/`nextProps`
   static dataPropNames = [
     'animate',
     'data',
@@ -143,60 +159,57 @@ extends React.PureComponent<
    * Set/update state in IHME-UI Fashion.
    */
   static propUpdates = {
+    // Initialize/update treemap-layout function.
     layout: (acc, _, prevProps, nextProps, state) => {
       if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
-      // Initialize/update treemap-layout function.
       return {
         ...acc,
         layout: Treemap.getLayout(nextProps, state && state.layout),
       };
     },
+    // Process data through the treemap layout.
     treemapData: (acc, _, prevProps, nextProps) => {
       if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
-      // Process data through the treemap layout.
       return {
         ...acc,
         treemapData: Treemap.layoutData(nextProps, acc.layout),
       };
     },
+    // Get initial x/y scales.
     scales: (acc, _, prevProps, nextProps, state) => {
       if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
-      // Get initial x/y scales.
       return {
         ...acc,
         scales: Treemap.getScales(nextProps, state),
       };
     },
+    // Establish datum processor.
     datumProcessor: (acc, _, prevProps, nextProps) => {
       if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
-
-      // Establish data processor.
       return {
         ...acc,
         datumProcessor: Treemap.getDatumProcessor(nextProps, acc.scales),
       };
     },
+    // Get animation processor.
     animationProcessor: (acc, _, prevProps, nextProps) => {
       if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
-
-      // Get animation processor.
       const animationProcessor = partial(
         animationProcessorFactory,
         nextProps.animate,
         [...TreemapCell.animatable, ...TreemapText.animatable],
         acc.datumProcessor,
       );
-
       return {
         ...acc,
         animationProcessor,
@@ -357,7 +370,7 @@ extends React.PureComponent<
   /**
    * Get a function that fully processes a treemap datum.
    */
-  static getDatumProcessor(props, scales) {
+  static getDatumProcessor(props: TreemapProps, scales: Partial<TreemapState>) {
     const cellDatumProcessor = Treemap.getCellDatumProcessor(props, scales);
     const textDatumProcessor = Treemap.getTextDatumProcessor(props);
 
@@ -375,13 +388,25 @@ extends React.PureComponent<
   /**
    * Get a function that processes a treemap datum for consumption by a <TreemapCell/> component.
    */
-  static getCellDatumProcessor({ dataAccessors: { attribution } }, scales) {
+  static getCellDatumProcessor(
+    { dataAccessors: { attribution } }: TreemapProps,
+    scales,
+  ) {
     const cellDatumProcessor = TreemapCell.getDatumProcessor(scales);
 
     return (datum) => {
       // Resolve props with datum.
-      const attributionValue = datum.data[attribution.value];
-      const attributionFill = datum.data[attribution.fill];
+      const attributionValue = (
+        attribution
+        && attribution.value
+        && datum.data[attribution.value]
+      );
+
+      const attributionFill = (
+        attribution
+        && attribution.fill
+        && datum.data[attribution.fill]
+      );
 
       return {
         attributionFill,
