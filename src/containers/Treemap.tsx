@@ -14,6 +14,7 @@ import {
   stateFromPropUpdates,
 } from 'ihme-ui';
 import findIndex from 'lodash-es/findIndex';
+import includes from 'lodash-es/includes';
 import noop from 'lodash-es/noop';
 import partial from 'lodash-es/partial';
 import sortBy from 'lodash-es/sortBy';
@@ -444,7 +445,7 @@ export default class Treemap extends React.PureComponent<
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}
-        selection={selection}
+        selected={includes(selection, datum.id)}
         stroke={stroke}
         strokeWidth={strokeWidth}
         {...processedDatum}

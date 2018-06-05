@@ -28,7 +28,7 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   onMouseOver: (...args: any[]) => void;
   opacity: number;
   rotate: number;
-  selection?: number[] | string[];
+  selected: boolean;
   stroke: string;
   strokeWidth: number | string;
   width: number;
@@ -167,17 +167,14 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
   renderRect = () => {
     const {
       cellFill,
-      datum,
-      selection,
+      selected,
       stroke,
       strokeWidth,
       height,
       width,
     } = this.props;
 
-    // TODO: DO THIS `combineStyles` a la IHME-UI `Shape`
-    const isSelected = includes(selection, datum.id);
-    const style = isSelected ? { stroke: 'red' } : {};
+    const style = selected ? { stroke: 'red' } : {};
 
     return (
       <rect
