@@ -1,4 +1,9 @@
-import includes from 'lodash-es/includes';
+import {
+  combineStyles,
+  memoizeByLastCall,
+  propsChanged,
+  stateFromPropUpdates,
+} from 'ihme-ui';
 import React from 'react';
 
 import DoubleClickReactComponent, {
@@ -29,8 +34,10 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   opacity: number;
   rotate: number;
   selected: boolean;
+  selectedStyle?: any;
   stroke: string;
   strokeWidth: number | string;
+  style?: any;
   width: number;
   x0: number;
   x1: number;
@@ -40,12 +47,61 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   y_translate: number;
 }
 
+interface TreemapCellState {
+  style: any;
+}
+
 export default class TreemapCell
-extends DoubleClickReactComponent<TreemapCellProps, {}> {
+extends DoubleClickReactComponent<
+  TreemapCellProps,
+  TreemapCellState
+> {
   static defaultProps = {
     animate: false,
     doubleClickTiming: 250,
     attributionValue: false,
+  };
+
+  /**
+   * Set/update state in IHME-UI Fashion.
+   */
+  static propUpdates = {
+    style: (acc, _, prevProps, nextProps) => {
+      if (!propsChanged(prevProps, nextProps, [
+        'cellFill',
+        'focused',
+        'focusedStyle',
+        'selected',
+        'selectedStyle',
+        'stroke',
+        'strokeWidth',
+        'style',
+      ])) {
+        return acc;
+      }
+
+      const styles = [
+        {
+          fill: nextProps.cellFill,
+          stroke: nextProps.stroke,
+          strokeWidth: nextProps.strokeWidth,
+        },
+        nextProps.style,
+      ];
+
+      if (nextProps.selected) {
+        styles.push(nextProps.selectedStyle);
+      }
+
+      if (nextProps.focused) {
+        styles.push(nextProps.focusedStyle);
+      }
+
+      return {
+        ...acc,
+        style: TreemapCell.combineStyles(styles),
+      };
+    },
   };
 
   static animatable = [
@@ -57,6 +113,8 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     'height',
     'width',
   ];
+
+  static combineStyles = memoizeByLastCall(combineStyles);
 
   static getDatumProcessor({ xScale, yScale }) {
     return (datum) => {
@@ -80,6 +138,11 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
   constructor(props) {
     super(props);
     this.handleClicks = this.handleClicks.bind(this);
+    this.state = stateFromPropUpdates(TreemapCell.propUpdates, {}, props, {});
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState(stateFromPropUpdates(TreemapCell.propUpdates, this.props, nextProps, this.state));
   }
 
   handleClicks(event) {
@@ -164,33 +227,17 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     );
   }
 
-  renderRect = () => {
-    const {
-      cellFill,
-      selected,
-      stroke,
-      strokeWidth,
-      height,
-      width,
-    } = this.props;
-
-    const style = selected ? { stroke: 'red' } : {};
-
-    return (
-      <rect
-        fill={cellFill}
-        height={Math.max(0, height)}
-        onClick={this.handleClicks}
-        onMouseLeave={this.onMouseLeave}
-        onMouseMove={this.onMouseMove}
-        onMouseOver={this.onMouseOver}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        style={style}
-        width={Math.max(0, width)}
-      />
-    );
-  }
+  renderRect = () => (
+    <rect
+      height={Math.max(0, this.props.height)}
+      onClick={this.handleClicks}
+      onMouseLeave={this.onMouseLeave}
+      onMouseMove={this.onMouseMove}
+      onMouseOver={this.onMouseOver}
+      style={this.state.style}
+      width={Math.max(0, this.props.width)}
+    />
+  )
 
   render() {
     const {

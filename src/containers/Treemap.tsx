@@ -80,6 +80,7 @@ interface TreemapProps {
   onMouseMove?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
   rootNodeId?: number | string;
+  selectedStyle?: any; // TODO: what types are style in geo-app?
   selection?: number[] | string[];
   showToDepth: number;
   stroke?: string;
@@ -116,6 +117,7 @@ export default class Treemap extends React.PureComponent<
     onMouseOver: noop,
     onMouseLeave: noop,
     onMouseMove: noop,
+    selectedStyle: { stroke: 'red' },
     showToDepth: 1,
     stroke: '#fff',
     strokeWidth: 3,
@@ -426,6 +428,7 @@ export default class Treemap extends React.PureComponent<
       onMouseMove,
       onMouseOver,
       selection,
+      selectedStyle,
       stroke,
       strokeWidth,
     } = this.props;
@@ -446,6 +449,7 @@ export default class Treemap extends React.PureComponent<
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}
         selected={includes(selection, datum.id)}
+        selectedStyle={selectedStyle}
         stroke={stroke}
         strokeWidth={strokeWidth}
         {...processedDatum}
