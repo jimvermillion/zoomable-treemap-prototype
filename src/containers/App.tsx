@@ -1,7 +1,10 @@
 import 'ihme-ui/dist/ihme-ui.css';
 
 import { json } from 'd3-fetch';
-import { stratify } from 'd3-hierarchy';
+import {
+  HierarchyNode,
+  stratify,
+} from 'd3-hierarchy';
 import {
   LoadingIndicator,
   ResponsiveContainer,
@@ -12,16 +15,33 @@ import DropShadowDefs from '../components/DropShadowDefs';
 import ResponsiveSVG from '../components/ResponsiveSVG';
 import TreemapView from './TreemapView';
 
-interface AppState {
-  data: any;
+interface RawDatum {
+  location_name: string;
+  location_id: number;
+  parent_location_id: number;
+  value: number;
+  type: number;
+  attribution: number;
 }
 
-export default class App extends React.PureComponent<{}, AppState> {
-  static stratifyData(data) {
-    return stratify()
-      .id((d: any) => d.location_id)
-      .parentId((d: any) => d.parent_location_id)(data)
-      .sum((d: any) => d.value)
+interface AppState {
+  data: HierarchyNode<RawDatum>;
+}
+
+export default class App
+extends React.PureComponent<
+  {},
+  AppState
+> {
+  static stratifyData(data: RawDatum[]): HierarchyNode<RawDatum> {
+    return stratify<RawDatum>()
+      .id((d: RawDatum) => String(d.location_id))
+      .parentId((d: RawDatum) => (
+        d.parent_location_id
+        ? String(d.parent_location_id)
+        : null
+      ))(data)
+      .sum(d => d.value)
       .sort((a, b) =>  (b.height - a.height || b.value - a.value));
   }
 
@@ -32,7 +52,7 @@ export default class App extends React.PureComponent<{}, AppState> {
 
   async componentDidMount() {
     const data = await json('resources/mock_populations_with_attributes.json');
-    this.setState({ data: App.stratifyData(data) });
+    this.setState({ data: App.stratifyData(data as RawDatum[]) });
   }
 
   renderView(data) {
