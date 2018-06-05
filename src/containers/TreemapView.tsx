@@ -12,6 +12,7 @@ interface TreemapViewProps {
 
 interface TreemapViewState {
   rootNodeId?: number | string;
+  selection?: number[] | string[];
   showToDepth: number;
 }
 

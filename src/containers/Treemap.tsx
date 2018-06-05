@@ -79,7 +79,7 @@ interface TreemapProps {
   onMouseMove?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
   rootNodeId?: number | string;
-  selected?: number | number[] | string | string[];
+  selection?: number[] | string[];
   showToDepth: number;
   stroke?: string;
   strokeWidth?: number | string;
@@ -131,6 +131,7 @@ export default class Treemap extends React.PureComponent<
         'width',
         'rootNodeId',
         'showToDepth',
+        'selection',
       ];
 
       if (!propsChanged(prevProps, nextProps, animationPropNames)) {
@@ -426,6 +427,7 @@ export default class Treemap extends React.PureComponent<
       onMouseLeave,
       onMouseMove,
       onMouseOver,
+      selection,
       stroke,
       strokeWidth,
     } = this.props;
@@ -445,6 +447,7 @@ export default class Treemap extends React.PureComponent<
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}
+        selection={selection}
         stroke={stroke}
         strokeWidth={strokeWidth}
         {...processedDatum}
