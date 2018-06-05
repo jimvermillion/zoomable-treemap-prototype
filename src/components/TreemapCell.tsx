@@ -69,7 +69,7 @@ extends DoubleClickReactComponent<
    */
   static propUpdates = {
     style: (acc, _, prevProps, nextProps) => {
-      if (!propsChanged(prevProps, nextProps, [
+      const stylePropNames = [
         'cellFill',
         'focused',
         'focusedStyle',
@@ -78,7 +78,9 @@ extends DoubleClickReactComponent<
         'stroke',
         'strokeWidth',
         'style',
-      ])) {
+      ];
+
+      if (!propsChanged(prevProps, nextProps, stylePropNames)) {
         return acc;
       }
 
