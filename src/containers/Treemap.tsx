@@ -69,6 +69,8 @@ interface TreemapProps {
   defsUrl?: string;
   doubleClickTiming?: number;
   dataAccessors: TreemapDataAccessors;
+  focused?: string | number;
+  focusedStyle?: React.CSSProperties;
   fontPadding?: number;
   fontSize?: number;
   fontSizeExtent?: [number, number];
@@ -104,6 +106,7 @@ export default class Treemap extends React.PureComponent<
   static defaultProps = {
     animate: DEFAULT_OPACITY_ANIMATION,
     colorScale: scaleOrdinal(schemeCategory10),
+    focusedStyle: { stroke: 'red' },
     fontPadding: 8,
     fontMargin: 3,
     fontSize: 12,
@@ -117,7 +120,7 @@ export default class Treemap extends React.PureComponent<
     onMouseOver: noop,
     onMouseLeave: noop,
     onMouseMove: noop,
-    selectedStyle: { stroke: 'red' },
+    selectedStyle: { stroke: 'green' },
     showToDepth: 1,
     stroke: '#fff',
     strokeWidth: 3,
@@ -130,6 +133,7 @@ export default class Treemap extends React.PureComponent<
     layout: (acc, _, prevProps, nextProps, state) => {
       const animationPropNames = [
         'data',
+        'focused',
         'height',
         'width',
         'rootNodeId',
@@ -215,7 +219,16 @@ export default class Treemap extends React.PureComponent<
   /**
    * Get data laid out in a treemap form.
    */
-  static layoutData({ data, showToDepth, rootNodeId, selection }, layout) {
+  static layoutData(
+    {
+      data,
+      focused,
+      showToDepth,
+      rootNodeId,
+      selection,
+    },
+    layout,
+  ) {
     const unsorted = layout(data).descendants();
 
     const filtered = unsorted.filter(({ children, depth, ...node }) => (
@@ -226,8 +239,10 @@ export default class Treemap extends React.PureComponent<
       && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
     ));
 
+    const selectedAndFocused = [...(selection || []), focused];
+
     // Sort the data, leaving any selected Ids on top of treemap.
-    return sortBy(filtered, datum => findIndex(selection, select => select === datum.id));
+    return sortBy(filtered, datum => findIndex(selectedAndFocused, select => select === datum.id));
   }
 
   static nodeHasRootAsAncestor(rootNodeId, node) {
@@ -420,6 +435,8 @@ export default class Treemap extends React.PureComponent<
       doubleClickTiming,
       defsUrl,
       dataAccessors,
+      focused,
+      focusedStyle,
       fontPadding,
       fontSizeExtent,
       onClick,
@@ -441,6 +458,8 @@ export default class Treemap extends React.PureComponent<
         defsUrl={defsUrl}
         dataAccessors={dataAccessors}
         doubleClickTiming={doubleClickTiming}
+        focused={focused === datum.id}
+        focusedStyle={focusedStyle}
         fontPadding={fontPadding}
         fontSizeExtent={fontSizeExtent}
         onClick={onClick}

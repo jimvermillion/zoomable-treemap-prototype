@@ -21,6 +21,8 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   colorScale?: (input: number | string) => string;
   datum: any;
   defsUrl: string;
+  focused?: boolean;
+  focusedStyle: React.CSSProperties;
   fontSize: number;
   fontPadding: number;
   fontSizeExtent: [number, number];

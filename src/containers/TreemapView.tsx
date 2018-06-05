@@ -11,6 +11,7 @@ interface TreemapViewProps {
 }
 
 interface TreemapViewState {
+  focused?: number | string;
   rootNodeId?: number | string;
   selection?: number[] | string[];
   showToDepth: number;
@@ -100,8 +101,8 @@ export default class TreemapView extends React.PureComponent<
     });
   }
 
-  onMouseOver = (_, node) => { // enter/leave
-    this.setState({ selection: [node.id] });
+  onMouseOver = (_, node) => {
+    this.setState({ focused: node.id });
   }
 
   render() {
@@ -113,6 +114,7 @@ export default class TreemapView extends React.PureComponent<
     } = this.props;
 
     const {
+      focused,
       rootNodeId,
       selection,
       showToDepth,
@@ -123,6 +125,7 @@ export default class TreemapView extends React.PureComponent<
         data={data}
         rootNodeId={rootNodeId}
         dataAccessors={dataAccessors}
+        focused={focused}
         showToDepth={showToDepth}
         onClick={this.zoomIn}
         onDoubleClick={this.zoomOut}
