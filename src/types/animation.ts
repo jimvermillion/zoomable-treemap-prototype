@@ -2,14 +2,13 @@ import {
   Events,
   PlainObject,
   Timing,
-  Transition,
 } from 'react-move';
 
 /****************************
  *          Props           *
  ****************************/
 
-type AnimationPhaseMethod = (processedData: any, data: any, index: number) => PlainObject;
+export type AnimationPhaseMethod = (processedData: any, data: any, index: number) => PlainObject;
 
 interface AnimatableAttributePropObject {
   start?: AnimationPhaseMethod;
@@ -20,16 +19,16 @@ interface AnimatableAttributePropObject {
   timing?: Timing;
 }
 
-interface AnimatePropObjectExtension {
+export interface AnimatePropObjectExtension {
   events?: Events;
   timing?: Timing;
 }
 
-interface AnimatePropObjectBase {
+export interface AnimatePropObjectBase {
   [key: string]: AnimatableAttributePropObject | AnimationPhaseMethod;
 }
 
-type AnimatePropObject = AnimatePropObjectBase & AnimatePropObjectExtension;
+export type AnimatePropObject = AnimatePropObjectBase & AnimatePropObjectExtension;
 
 export type AnimateProp = AnimatePropObject | boolean;
 
@@ -66,7 +65,8 @@ export type DatumProcessor<
   ProcessedDatum
 > = (datum: RawDatum) => ProcessedDatum;
 
-type AnimationPhase = 'enter' | 'update' | 'leave';
-type AnimationStartProcessor = (phase: 'start') => (data: any, index: number) => PlainObject;
-type AnimationPhaseProcessor = (phase: AnimationPhase) => (data: any, index: number) => Transition;
-export type AnimationProcessor = AnimationStartProcessor & AnimationPhaseProcessor;
+export type AnimationProcessorFunction<ReturnValue> = (data: any, index: number) => ReturnValue;
+
+export type AnimationProcessor = (
+  phase: string,
+) => (data: any, index: number) => PlainObject;
