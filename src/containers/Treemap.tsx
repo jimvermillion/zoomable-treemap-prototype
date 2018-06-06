@@ -526,14 +526,28 @@ extends React.PureComponent<
   renderTreemapCell = ({
     data: datum,
     key,
-    state: processedDatum,
+    state: {
+      x_translate,
+      y_translate,
+      rotate,
+      fontSize,
+      label,
+      attributionFill,
+      attributionValue,
+      x0,
+      x1,
+      y0,
+      y1,
+      opacity,
+      height,
+      width,
+    },
   }) => {
     const {
       animate,
       colorScale,
       doubleClickTiming,
       defsUrl,
-      dataAccessors,
       focused,
       focusedStyle,
       fontPadding,
@@ -553,15 +567,19 @@ extends React.PureComponent<
     return (
       <TreemapCell
         key={key}
+        attributionFill={attributionFill}
+        attributionValue={attributionValue}
         cellFill={colorScale(datum.data.type)}
         datum={datum}
         defsUrl={defsUrl}
-        dataAccessors={dataAccessors}
         doubleClickTiming={doubleClickTiming}
         focused={focused === datum.id}
         focusedStyle={focusedStyle}
         fontPadding={fontPadding}
+        fontSize={fontSize}
         fontSizeExtent={fontSizeExtent}
+        height={height}
+        label={label}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
         onMouseEnter={onMouseEnter}
@@ -569,11 +587,18 @@ extends React.PureComponent<
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}
         opacity={animate ? opacity : 1}
+        rotate={rotate}
         selected={includes(selection, datum.id)}
         selectedStyle={selectedStyle}
         stroke={stroke}
         strokeWidth={strokeWidth}
-        {...processedDatum}
+        width={width}
+        x0={x0}
+        x1={x1}
+        x_translate={x_translate}
+        y0={y0}
+        y1={y1}
+        y_translate={y_translate}
       />
     );
   }
