@@ -37,9 +37,39 @@ export type AnimateProp = AnimatePropObject | boolean;
  *          Util           *
  ***************************/
 
-type RawDatum = any;
-type ProcessedDatum = any;
-export type DatumProcessor = (datum: RawDatum) => ProcessedDatum;
+export interface TreemapCellProcessedDatum {
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+  opacity: number;
+  height: number;
+  width: number;
+}
+
+export interface TreemapTextProcessedDatum {
+  x_translate: number;
+  y_translate: number;
+  rotate: number;
+  fontSize: number;
+}
+
+interface TreemapProcessedDatumAccessors {
+  attributionFill: string;
+  attributionValue: number;
+  label: string;
+}
+
+export type TreemapProcessedDatum = (
+  TreemapProcessedDatumAccessors
+  & TreemapTextProcessedDatum
+  & TreemapCellProcessedDatum
+);
+
+export type DatumProcessor<
+  RawDatum,
+  ProcessedDatum
+> = (datum: RawDatum) => ProcessedDatum;
 
 type AnimationPhase = 'enter' | 'update' | 'leave';
 type AnimationStartProcessor = (phase: 'start') => (data: any, index: number) => PlainObject;

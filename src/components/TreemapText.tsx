@@ -1,5 +1,10 @@
 import React from 'react';
 
+import {
+  DatumProcessor,
+  TreemapTextProcessedDatum,
+} from '../types';
+
 import { stringWidth } from '../utils';
 
 interface TreemapTextProps {
@@ -18,6 +23,11 @@ interface TreemapTextProps {
   x_translate: number;
   y_translate: number;
 }
+
+type TreemapTextDatumProcessor = DatumProcessor<
+  Partial<TreemapTextProps>,
+  TreemapTextProcessedDatum
+>;
 
 export default class TreemapText extends React.PureComponent<TreemapTextProps> {
   static defaultProps = {
@@ -39,7 +49,7 @@ export default class TreemapText extends React.PureComponent<TreemapTextProps> {
     'fontSize',
   ];
 
-  static processDatum = (props) => ({
+  static processDatum: TreemapTextDatumProcessor = (props) => ({
     ...TreemapText.fontDirection(props),
     fontSize: TreemapText.fontSize(props),
   })

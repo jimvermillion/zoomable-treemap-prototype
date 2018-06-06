@@ -30,6 +30,8 @@ import {
   AnimateProp,
   AnimationProcessor,
   DatumProcessor,
+  TreemapCellProcessedDatum,
+  TreemapProcessedDatum,
 } from '../types';
 import { animationProcessorFactory } from '../utils';
 
@@ -70,25 +72,37 @@ interface LayoutOptions {
   tile: any;
 }
 
-interface RawTreemapDatum {
+export interface TreemapDatum {
   [key: string]: any;
 }
 
 type TreemapEventHandler = (
   event: React.MouseEvent<any>,
-  data: RawTreemapDatum,
+  data: TreemapDatum,
   component: TreemapCell,
 ) => void;
+
+type Extent = [number, number];
+
+interface DomainRangeSet {
+  xDomain: Extent;
+  xRange: Extent;
+  yDomain: Extent;
+  yRange: Extent;
+}
+
+type NodeId = number | string;
 
 interface TreemapProps {
   animate?: AnimateProp;
   colorScale?: (input: number | string) => string;
-  data: HierarchyNode<RawTreemapDatum>;
+  data: HierarchyNode<TreemapDatum>;
   defsUrl?: string;
   doubleClickTiming?: number;
   dataAccessors: TreemapDataAccessors;
   focused?: string | number;
   focusedStyle?: React.CSSProperties;
+  fontMargin?: number;
   fontPadding?: number;
   fontSize?: number;
   fontSizeExtent?: [number, number];
@@ -100,7 +114,7 @@ interface TreemapProps {
   onMouseLeave?: TreemapEventHandler;
   onMouseMove?: TreemapEventHandler;
   onMouseOver?: TreemapEventHandler;
-  rootNodeId?: number | string;
+  rootNodeId?: NodeId;
   selectedStyle?: React.CSSProperties;
   selection?: number[] | string[];
   showToDepth: number;
@@ -110,14 +124,19 @@ interface TreemapProps {
   width: number;
 }
 
-interface TreemapState {
+interface TreemapStateBase {
   animationProcessor: AnimationProcessor;
-  datumProcessor: DatumProcessor;
-  layout: TreemapLayout<RawTreemapDatum>;
-  treemapData: Array<HierarchyRectangularNode<RawTreemapDatum>>;
+  datumProcessor: DatumProcessor<TreemapDatum, TreemapProcessedDatum>;
+  layout: TreemapLayout<TreemapDatum>;
+  treemapData: Array<HierarchyRectangularNode<TreemapDatum>>;
+}
+
+export interface ScaleSet {
   xScale: ScaleLinear<number, number>;
   yScale: ScaleLinear<number, number>;
 }
+
+type TreemapState = TreemapStateBase & ScaleSet;
 
 export default class Treemap
 extends React.PureComponent<
@@ -223,7 +242,14 @@ extends React.PureComponent<
   /**
    * Get or update a treemap layout function.
    */
-  static getLayout = ({ width, height, layoutOptions }, layout) => {
+  static getLayout = (
+    {
+      width,
+      height,
+      layoutOptions,
+    }: TreemapProps,
+    layout?: TreemapLayout<TreemapDatum>,
+  ): TreemapLayout<TreemapDatum> => {
     if (layout) {
       // If a layout already exists, return it with an updated height.
       return layout.size([width, height]);
@@ -252,11 +278,13 @@ extends React.PureComponent<
       showToDepth,
       rootNodeId,
       selection,
-    },
-    layout,
-  ) {
+    }: TreemapProps,
+    layout: TreemapLayout<TreemapDatum>,
+  ): Array<HierarchyRectangularNode<TreemapDatum>> {
+    // Get d3-treemap-ified data.
     const unsorted = layout(data).descendants();
 
+    // Filter data for what is to be shown.
     const filtered = unsorted.filter(({ children, depth, ...node }) => (
       // At the current depth
       (depth === showToDepth
@@ -265,19 +293,23 @@ extends React.PureComponent<
       && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
     ));
 
+    // Array of `focused` id, and `selection` ids.
     const selectedAndFocused = [...(selection || []), focused];
 
     // Sort the data, leaving any selected Ids on top of treemap.
     return sortBy(filtered, datum => findIndex(selectedAndFocused, select => select === datum.id));
   }
 
-  static nodeHasRootAsAncestor(rootNodeId, node) {
+  static nodeHasRootAsAncestor(
+    rootNodeId: TreemapProps['rootNodeId'],
+    node: Partial<HierarchyRectangularNode<TreemapDatum>>,
+  ) {
     // If no active root node, do not exclude.
     if (!rootNodeId) {
       return true;
     }
     // If `node` is the root node, return true.
-    if (node.id === rootNodeId) {
+    if (node.id === String(rootNodeId)) {
       return true;
     }
     // If we've reached the base of the hierarchy without finding the root, return false.
@@ -291,9 +323,15 @@ extends React.PureComponent<
   /**
    * Get current x/y scales.
    */
-  static getScales(props, { xScale, yScale } = DEFAULT_SCALES) {
+  static getScales(
+    props: TreemapProps,
+    { xScale, yScale }: ScaleSet = DEFAULT_SCALES,
+  ): Partial<TreemapState> {
     // Get root node that has been isolated.
-    const node = Treemap.getNodeById(props.rootNodeId, props.data);
+    const node = Treemap.getNodeById(
+      props.rootNodeId,
+      props.data as HierarchyRectangularNode<TreemapDatum>,
+    );
 
     // Determine domain and range for x and y.
     const {
@@ -313,7 +351,10 @@ extends React.PureComponent<
   /**
    * Get full HierarchyRectangularNode by just its id.
    */
-  static getNodeById(id, root) {
+  static getNodeById(
+    id: NodeId,
+    root: HierarchyRectangularNode<TreemapDatum>,
+  ): HierarchyRectangularNode<TreemapDatum> | null {
     // If id matches root.id, we found the node.
     if (root.id === id) {
       return root;
@@ -336,7 +377,10 @@ extends React.PureComponent<
   /**
    * Get domain and range for x/y scales.
    */
-  static getDomainsAndRanges(props, rootNode) {
+  static getDomainsAndRanges(
+    props: TreemapProps,
+    rootNode?: HierarchyRectangularNode<TreemapDatum>,
+  ): DomainRangeSet {
     // Establish domain and range for `height` and `width`.
     const domainAndRangeFromProps = Treemap.getDomainsAndRangesFromProps(props);
 
@@ -344,15 +388,20 @@ extends React.PureComponent<
     const domainFromNode = rootNode ? Treemap.getDomainsFromNode(rootNode) : {};
 
     // Override height and width domain/range if root node if present.
-    return { ...domainAndRangeFromProps, ...domainFromNode };
+    return {
+      ...domainAndRangeFromProps,
+      ...domainFromNode,
+    };
   }
 
   /**
    * Get x/y domain and range set from props.
    */
-  static getDomainsAndRangesFromProps = ({ height, width }: Partial<TreemapProps>) => {
-    const x = [0, width];
-    const y = [0, height];
+  static getDomainsAndRangesFromProps = (
+    { height, width }: Partial<TreemapProps>,
+  ): DomainRangeSet => {
+    const x: Extent = [0, width];
+    const y: Extent = [0, height];
 
     return {
       xDomain: x,
@@ -365,7 +414,9 @@ extends React.PureComponent<
   /**
    * Get x/y domain set by a HierarchyRectangularNode's properties.
    */
-  static getDomainsFromNode = ({ x0, x1, y0, y1 }: HierarchyRectangularNode<any>) => ({
+  static getDomainsFromNode = (
+    { x0, x1, y0, y1 }: HierarchyRectangularNode<TreemapDatum>,
+  ): Partial<DomainRangeSet> => ({
     xDomain: [x0, x1],
     yDomain: [y0, y1],
   })
@@ -373,7 +424,10 @@ extends React.PureComponent<
   /**
    * Get a function that fully processes a treemap datum.
    */
-  static getDatumProcessor(props: TreemapProps, scales: Partial<TreemapState>) {
+  static getDatumProcessor(
+    props: TreemapProps,
+    scales: ScaleSet,
+  ): (datum: HierarchyRectangularNode<TreemapDatum>) => Partial<TreemapProcessedDatum> {
     const cellDatumProcessor = Treemap.getCellDatumProcessor(props, scales);
     const textDatumProcessor = Treemap.getTextDatumProcessor(props);
 
@@ -382,7 +436,7 @@ extends React.PureComponent<
       const processedCellDatum = cellDatumProcessor(datum);
 
       return {
-        ...textDatumProcessor(datum, processedCellDatum),
+        ...textDatumProcessor(datum, processedCellDatum as TreemapCellProcessedDatum),
         ...processedCellDatum,
       };
     };
@@ -393,11 +447,11 @@ extends React.PureComponent<
    */
   static getCellDatumProcessor(
     { dataAccessors: { attribution } }: TreemapProps,
-    scales,
-  ) {
+    scales: ScaleSet,
+  ): (datum: HierarchyRectangularNode<TreemapDatum>) => Partial<TreemapProcessedDatum> {
     const cellDatumProcessor = TreemapCell.getDatumProcessor(scales);
-
-    return (datum) => {
+    // TODO: this is tagged for prop resolver work!
+    return datum => {
       // Resolve props with datum.
       const attributionValue = (
         attribution
@@ -422,7 +476,9 @@ extends React.PureComponent<
   /**
    * Get a function that processes a treemap datum for consumption by a <TreemapText/> component.
    */
-  static getTextDatumProcessor(props) {
+  static getTextDatumProcessor(
+    props: TreemapProps,
+  ): (datum: TreemapDatum, cellDatum: TreemapCellProcessedDatum) => Partial<TreemapProcessedDatum> {
     return (datum, { height: boundingHeight, width: boundingWidth }) => {
       // Get the label from the datum.
       const label = datum.data[props.dataAccessors.label];

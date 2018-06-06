@@ -1,3 +1,4 @@
+import { HierarchyRectangularNode } from 'd3-hierarchy';
 import {
   combineStyles,
   memoizeByLastCall,
@@ -6,10 +7,24 @@ import {
 } from 'ihme-ui';
 import React from 'react';
 
+import {
+  ScaleSet,
+  TreemapDatum,
+} from '../containers/Treemap';
 import DoubleClickReactComponent, {
   DoubleClickComponentProps,
-} from '../components/DoubleClickReactComponent';
+} from './DoubleClickReactComponent';
 import TreemapText from './TreemapText';
+
+import {
+  DatumProcessor,
+  TreemapCellProcessedDatum,
+} from '../types';
+
+type TreemapCellDatumProcessor = DatumProcessor<
+  HierarchyRectangularNode<TreemapDatum>,
+  TreemapCellProcessedDatum
+>;
 
 const ATTRIBUTION_OPACITY = 0.5;
 
@@ -119,7 +134,9 @@ extends DoubleClickReactComponent<
 
   static combineStyles = memoizeByLastCall(combineStyles);
 
-  static getDatumProcessor({ xScale, yScale }) {
+  static getDatumProcessor(
+    { xScale, yScale }: ScaleSet,
+  ): TreemapCellDatumProcessor {
     return (datum) => {
       const x0 = xScale(datum.x0);
       const x1 = xScale(datum.x1);
