@@ -78,6 +78,7 @@ interface TreemapProps {
   layoutOptions?: LayoutOptions;
   onClick?: (...args: any[]) => void;
   onDoubleClick?: (...args: any[]) => void;
+  onMouseEnter?: (...args: any[]) => void;
   onMouseLeave?: (...args: any[]) => void;
   onMouseMove?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
@@ -119,6 +120,7 @@ extends React.PureComponent<
     },
     onClick: noop,
     onMouseOver: noop,
+    onMouseEnter: noop,
     onMouseLeave: noop,
     onMouseMove: noop,
     showToDepth: 1,
@@ -449,6 +451,7 @@ extends React.PureComponent<
       fontSizeExtent,
       onClick,
       onDoubleClick,
+      onMouseEnter,
       onMouseLeave,
       onMouseMove,
       onMouseOver,
@@ -472,6 +475,7 @@ extends React.PureComponent<
         fontSizeExtent={fontSizeExtent}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
+        onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}

@@ -30,6 +30,7 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   label: string;
   onClick: (...args: any[]) => void;
   onDoubleClick: (...args: any[]) => void;
+  onMouseEnter: (...args: any[]) => void;
   onMouseLeave: (...args: any[]) => void;
   onMouseMove: (...args: any[]) => void;
   onMouseOver: (...args: any[]) => void;
@@ -153,6 +154,15 @@ extends DoubleClickReactComponent<
     super.handleClicks(event, this.props.datum, this);
   }
 
+  onMouseEnter = event => {
+    const {
+      datum,
+      onMouseEnter,
+    } = this.props;
+
+    onMouseEnter(event, datum, this);
+  }
+
   onMouseLeave = event => {
     const {
       datum,
@@ -235,6 +245,7 @@ extends DoubleClickReactComponent<
     <rect
       height={Math.max(0, this.props.height)}
       onClick={this.handleClicks}
+      onMouseEnter={this.onMouseEnter}
       onMouseLeave={this.onMouseLeave}
       onMouseMove={this.onMouseMove}
       onMouseOver={this.onMouseOver}

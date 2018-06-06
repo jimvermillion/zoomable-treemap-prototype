@@ -106,7 +106,15 @@ export default class TreemapView extends React.PureComponent<
   }
 
   onMouseOver = (_, node) => {
-    this.setState({ focused: node.id });
+    if (node.id !== this.state.focused) {
+      this.setState({ focused: node.id });
+    }
+  }
+
+  onMouseLeave = (_, node) => {
+    if (node.id === this.state.focused) {
+      this.setState({ focused: null });
+    }
   }
 
   render() {
@@ -135,6 +143,7 @@ export default class TreemapView extends React.PureComponent<
         onClick={this.zoomIn}
         onDoubleClick={this.zoomOut}
         onMouseOver={this.onMouseOver}
+        onMouseLeave={this.onMouseLeave}
         defsUrl="url(#dropshadow)"
         selection={selection}
         selectedStyle={SELECTED_STYLE}
