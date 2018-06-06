@@ -43,7 +43,7 @@ animation:
 * [x] Use react-move <NodeGroup /> that uses the data processor to animate the treemap in the way already established in IHME-UI react-move branches.
 
 zoom logic: 
-* [ ] when at a leaf, zoom out should go to direct parent?
+* [x] when at a leaf, zoom out should go to direct parent?
 
 prototype specific functionality:
 * [ ] UI element such as a slider to control depth/breakdown
@@ -63,7 +63,7 @@ prototype specific functionality:
 * [ ] use propResolver where available, streamline what gets fed to components.
   * [ ] implement `keyField` rest of common accessors.
 * [x] Implement selected cells (sort data putting selected cells last)
-* [ ] Implement onmouseover/hover for focused node.
+* [x] Implement onmouseover/hover for focused node.
 * [ ] get rid of `any`s where possible. 
 * [x] fix bug where label's are not being scaled.
 * [x] Refactor consumed classes to not call their own static functions.
