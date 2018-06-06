@@ -54,17 +54,12 @@ export interface TreemapTextProcessedDatum {
   fontSize: number;
 }
 
-interface TreemapProcessedDatumAccessors {
+export interface TreemapProcessedDatum
+extends TreemapCellProcessedDatum, TreemapTextProcessedDatum {
   attributionFill: string;
   attributionValue: number;
   label: string;
 }
-
-export type TreemapProcessedDatum = (
-  TreemapProcessedDatumAccessors
-  & TreemapTextProcessedDatum
-  & TreemapCellProcessedDatum
-);
 
 export type DatumProcessor<
   RawDatum,

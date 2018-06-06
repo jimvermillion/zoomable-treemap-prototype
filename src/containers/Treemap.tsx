@@ -56,21 +56,20 @@ const DEFAULT_OPACITY_ANIMATION = {
   },
 };
 
-interface AttributionDataAccessors {
-  fill?: string;
-  value: string;
-}
-
-export interface TreemapDataAccessors {
-  label: string;
-  attribution?: AttributionDataAccessors;
-}
-
 interface LayoutOptions {
   padding: number;
   round: boolean;
   tile: any;
 }
+
+type TreemapCellDatumProcessor = (
+  datum: HierarchyRectangularNode<TreemapDatum>,
+) => Partial<TreemapProcessedDatum>;
+
+type TreemapTextDatumProcessor = (
+  datum: TreemapDatum,
+  cellDatum: TreemapCellProcessedDatum,
+) => Partial<TreemapProcessedDatum>;
 
 export interface TreemapDatum {
   [key: string]: any;
@@ -89,6 +88,16 @@ interface DomainRangeSet {
   xRange: Extent;
   yDomain: Extent;
   yRange: Extent;
+}
+
+interface AttributionDataAccessors {
+  fill?: string;
+  value: string;
+}
+
+export interface TreemapDataAccessors {
+  label: string;
+  attribution?: AttributionDataAccessors;
 }
 
 type NodeId = number | string;
@@ -427,7 +436,7 @@ extends React.PureComponent<
   static getDatumProcessor(
     props: TreemapProps,
     scales: ScaleSet,
-  ): (datum: HierarchyRectangularNode<TreemapDatum>) => Partial<TreemapProcessedDatum> {
+  ): DatumProcessor<HierarchyRectangularNode<TreemapDatum>, Partial<TreemapProcessedDatum>> {
     const cellDatumProcessor = Treemap.getCellDatumProcessor(props, scales);
     const textDatumProcessor = Treemap.getTextDatumProcessor(props);
 
@@ -448,7 +457,7 @@ extends React.PureComponent<
   static getCellDatumProcessor(
     { dataAccessors: { attribution } }: TreemapProps,
     scales: ScaleSet,
-  ): (datum: HierarchyRectangularNode<TreemapDatum>) => Partial<TreemapProcessedDatum> {
+  ): TreemapCellDatumProcessor {
     const cellDatumProcessor = TreemapCell.getDatumProcessor(scales);
     // TODO: this is tagged for prop resolver work!
     return datum => {
@@ -478,20 +487,20 @@ extends React.PureComponent<
    */
   static getTextDatumProcessor(
     props: TreemapProps,
-  ): (datum: TreemapDatum, cellDatum: TreemapCellProcessedDatum) => Partial<TreemapProcessedDatum> {
-    return (datum, { height: boundingHeight, width: boundingWidth }) => {
+  ): TreemapTextDatumProcessor {
+    return (datum, { height, width }) => {
       // Get the label from the datum.
       const label = datum.data[props.dataAccessors.label];
 
       // Assemble `props` needed by `<TreemapText/>`.
       const textProps = {
-        boundingHeight,
-        boundingWidth,
-        fontPadding: props.fontPadding,
         fontMargin: props.fontMargin,
+        fontPadding: props.fontPadding,
         fontSize: props.fontSize,
         fontSizeExtent: props.fontSizeExtent,
+        height,
         label,
+        width,
       };
 
       return {

@@ -207,7 +207,6 @@ extends DoubleClickReactComponent<
 
   renderText = (dropshadow?) => {
     const {
-      datum,
       fontSize,
       label,
       rotate,
@@ -218,7 +217,6 @@ extends DoubleClickReactComponent<
     return (
       <TreemapText
         fontSize={fontSize}
-        datum={datum}
         filterDefsUrl={dropshadow}
         label={label}
         rotate={rotate}
