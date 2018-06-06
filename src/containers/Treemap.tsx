@@ -47,7 +47,10 @@ const DEFAULT_OPACITY_ANIMATION = {
   opacity: {
     enter: OPACITY_ANIMATION,
     update: OPACITY_ANIMATION,
-    leave: () => ({ opacity: [0], timing: { duration: 666 } }),
+    leave: () => ({
+      opacity: [0],
+      timing: { duration: 666 },
+    }),
   },
 };
 
@@ -457,7 +460,11 @@ extends React.PureComponent<
       datumProcessor,
     } = this.state;
 
-    return treemapData.map(datumProcessor);
+    return treemapData.map(datum => ({
+      data: datum,
+      key: `cell-${datum.id}`,
+      state: datumProcessor(datum),
+    }));
   }
 
   renderTreemapCell = ({
@@ -466,6 +473,7 @@ extends React.PureComponent<
     state: processedDatum,
   }) => {
     const {
+      animate,
       colorScale,
       doubleClickTiming,
       defsUrl,
@@ -504,6 +512,7 @@ extends React.PureComponent<
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}
+        opacity={animate ? opacity : 1}
         selected={includes(selection, datum.id)}
         selectedStyle={selectedStyle}
         stroke={stroke}
@@ -539,7 +548,7 @@ extends React.PureComponent<
   }
 
   shouldAnimate() {
-    return this.props.animate;
+    return !!this.props.animate;
   }
 
   render() {
