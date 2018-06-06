@@ -14,7 +14,6 @@ import TreemapText from './TreemapText';
 const ATTRIBUTION_OPACITY = 0.5;
 
 interface TreemapCellProps extends DoubleClickComponentProps {
-  animate?: any;
   attributionFill: string;
   attributionValue?: number;
   cellFill: string;
@@ -60,7 +59,6 @@ extends DoubleClickReactComponent<
   TreemapCellState
 > {
   static defaultProps = {
-    animate: false,
     doubleClickTiming: 250,
     attributionValue: false,
   };
