@@ -1,10 +1,11 @@
+import { HierarchyNode } from 'd3-hierarchy';
 import React from 'react';
 
-import Treemap from './Treemap';
+import Treemap, { TreemapDataAccessors } from './Treemap';
 
 interface TreemapViewProps {
-  data: any;
-  dataAccessors?: any;
+  data: HierarchyNode<any>;
+  dataAccessors?: TreemapDataAccessors;
   height?: number;
   rootNodeId?: number | string;
   width?: number;
@@ -21,7 +22,8 @@ interface TreemapViewState {
 const FOCUSED_STYLE = { stroke: 'red' };
 const SELECTED_STYLE = { stroke: 'green' };
 
-export default class TreemapView extends React.PureComponent<
+export default class TreemapView
+extends React.PureComponent<
   TreemapViewProps,
   TreemapViewState
 > {
@@ -39,11 +41,11 @@ export default class TreemapView extends React.PureComponent<
     this.state = { showToDepth: 3 };
   }
 
-  getParents = (lilNode) => {
-    if (!lilNode.parent) {
-      return [lilNode.data.location_name];
+  getParents = (node) => {
+    if (!node.parent) {
+      return [node.data.location_name];
     }
-    return [...this.getParents(lilNode.parent), lilNode.data.location_name];
+    return [...this.getParents(node.parent), node.data.location_name];
   }
 
   zoomOut = (_, node) => {

@@ -1,34 +1,55 @@
 import React from 'react';
 
+import {
+  DatumProcessor,
+  TreemapTextProcessedDatum,
+} from '../types';
+
 import { stringWidth } from '../utils';
 
-interface TreemapTextProps {
-  animate?: boolean;
-  datum: any;
-  dropShadowFill?: string;
-  fill?: string;
-  filterDefsUrl?: string;
-  fontMargin?: number;
-  fontPadding?: number;
-  fontSize?: number;
-  fontSizeExtent?: [number, number];
-  label?: string | number;
-  processedDatum?: any;
+interface TextOrientation {
   rotate: number;
   x_translate: number;
   y_translate: number;
 }
 
+interface TreemapTextProps extends TextOrientation {
+  dropShadowFill?: string;
+  fill?: string;
+  filterDefsUrl?: string;
+  fontSize?: number;
+  label?: string;
+}
+
+interface TextSizingInputs {
+  fontMargin: number;
+  fontPadding: number;
+  fontSize: number;
+  fontSizeExtent: [number, number];
+  height: number;
+  label?: string;
+  width: number;
+}
+
+interface SizingProperties {
+  x: number;
+  y: number;
+  width: number;
+  shouldBeVertical: boolean;
+  minValue: number;
+  maxValue: number;
+}
+
+type TreemapTextDatumProcessor = DatumProcessor<
+  TextSizingInputs,
+  TreemapTextProcessedDatum
+>;
+
 export default class TreemapText extends React.PureComponent<TreemapTextProps> {
   static defaultProps = {
-    animate: true,
     dropShadowFill: '#000',
     fill: '#fff',
     filterDefsUrl: '',
-    fontSizeExtent: [10, 48],
-    fontPadding: 8,
-    fontMargin: 3,
-    fontSize: 12,
     label: '',
   };
 
@@ -39,45 +60,45 @@ export default class TreemapText extends React.PureComponent<TreemapTextProps> {
     'fontSize',
   ];
 
-  static processDatum = (props) => ({
+  static processDatum: TreemapTextDatumProcessor = (props) => ({
     ...TreemapText.fontDirection(props),
     fontSize: TreemapText.fontSize(props),
   })
 
   static sizingProperties = ({
-    boundingHeight,
-    boundingWidth,
     fontPadding,
     fontSize,
     fontSizeExtent,
-    label,
-  }) => {
+    height,
+    label = '',
+    width,
+  }: Partial<TextSizingInputs>): SizingProperties => {
     const [minValue, maxValue] = fontSizeExtent;
 
-    const x = Math.max(0, Math.floor((boundingWidth) - fontPadding));
+    const x = Math.max(0, Math.floor((width) - fontPadding));
 
-    const y = Math.max(0, Math.floor((boundingHeight) - fontPadding));
+    const y = Math.max(0, Math.floor((height) - fontPadding));
 
-    const width = stringWidth(label, fontSize) / fontSize;
+    const labelWidth = stringWidth(label, fontSize) / fontSize;
 
     const shouldBeVertical = (
       // Bounding Rect is taller than it is wide
       y > x
       // and label width is wider than bounding rectangle width.
-      && (width * (minValue + 1)) > x
+      && (labelWidth * (minValue + 1)) > x
     );
 
     return {
       x,
       y,
-      width,
+      width: labelWidth,
       shouldBeVertical,
       minValue,
       maxValue,
     };
   }
 
-  static fontSize = (props) => {
+  static fontSize = (props: TextSizingInputs): number => {
     const {
       x,
       y,
@@ -110,7 +131,7 @@ export default class TreemapText extends React.PureComponent<TreemapTextProps> {
     return size;
   }
 
-  static fontDirection = (props) => {
+  static fontDirection = (props: TextSizingInputs): TextOrientation => {
     const { fontMargin } = props;
 
     const { shouldBeVertical } = TreemapText.sizingProperties(props);
