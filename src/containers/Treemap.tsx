@@ -14,6 +14,7 @@ import {
   stateFromPropUpdates,
 } from 'ihme-ui';
 import findIndex from 'lodash-es/findIndex';
+import includes from 'lodash-es/includes';
 import noop from 'lodash-es/noop';
 import partial from 'lodash-es/partial';
 import sortBy from 'lodash-es/sortBy';
@@ -68,6 +69,8 @@ interface TreemapProps {
   defsUrl?: string;
   doubleClickTiming?: number;
   dataAccessors: TreemapDataAccessors;
+  focused?: string | number;
+  focusedStyle?: React.CSSProperties;
   fontPadding?: number;
   fontSize?: number;
   fontSizeExtent?: [number, number];
@@ -75,14 +78,17 @@ interface TreemapProps {
   layoutOptions?: LayoutOptions;
   onClick?: (...args: any[]) => void;
   onDoubleClick?: (...args: any[]) => void;
+  onMouseEnter?: (...args: any[]) => void;
   onMouseLeave?: (...args: any[]) => void;
   onMouseMove?: (...args: any[]) => void;
   onMouseOver?: (...args: any[]) => void;
   rootNodeId?: number | string;
-  selected?: number | number[] | string | string[];
+  selectedStyle?: React.CSSProperties;
+  selection?: number[] | string[];
   showToDepth: number;
   stroke?: string;
   strokeWidth?: number | string;
+  style?: React.CSSProperties;
   width: number;
 }
 
@@ -95,7 +101,8 @@ interface TreemapState {
   yScale: ScaleLinear<number, number>;
 }
 
-export default class Treemap extends React.PureComponent<
+export default class Treemap
+extends React.PureComponent<
   TreemapProps,
   TreemapState
 > {
@@ -113,6 +120,7 @@ export default class Treemap extends React.PureComponent<
     },
     onClick: noop,
     onMouseOver: noop,
+    onMouseEnter: noop,
     onMouseLeave: noop,
     onMouseMove: noop,
     showToDepth: 1,
@@ -120,68 +128,78 @@ export default class Treemap extends React.PureComponent<
     strokeWidth: 3,
   };
 
+  static dataPropNames = [
+    'animate',
+    'data',
+    'focused',
+    'height',
+    'width',
+    'rootNodeId',
+    'showToDepth',
+    'selection',
+  ];
+
   /**
    * Set/update state in IHME-UI Fashion.
    */
   static propUpdates = {
     layout: (acc, _, prevProps, nextProps, state) => {
-      const animationPropNames = [
-        'data',
-        'height',
-        'width',
-        'rootNodeId',
-        'showToDepth',
-      ];
-
-      if (!propsChanged(prevProps, nextProps, animationPropNames)) {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
-
-      // Get the `treemap` layout.
-      const layout = Treemap.getLayout(nextProps, state && state.layout);
-
-      // Process data through the treemap layout.
-      const treemapData = Treemap.layoutData(nextProps, layout);
-
+      // Initialize/update treemap-layout function.
       return {
         ...acc,
-        layout,
-        treemapData,
+        layout: Treemap.getLayout(nextProps, state && state.layout),
       };
     },
-    animationProcessor: (acc, _, prevProps, nextProps, state) => {
-      const animationPropNames = [
-        'animate',
-        'data',
-        'height',
-        'width',
-        'rootNodeId',
-        'showToDepth',
-      ];
-
-      if (!propsChanged(prevProps, nextProps, animationPropNames)) {
+    treemapData: (acc, _, prevProps, nextProps) => {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
+        return acc;
+      }
+      // Process data through the treemap layout.
+      return {
+        ...acc,
+        treemapData: Treemap.layoutData(nextProps, acc.layout),
+      };
+    },
+    scales: (acc, _, prevProps, nextProps, state) => {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
+        return acc;
+      }
+      // Get initial x/y scales.
+      return {
+        ...acc,
+        scales: Treemap.getScales(nextProps, state),
+      };
+    },
+    datumProcessor: (acc, _, prevProps, nextProps) => {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
 
-      // Get initial x/y scales.
-      const scales = Treemap.getScales(nextProps, state);
-
       // Establish data processor.
-      const datumProcessor = Treemap.getDatumProcessor(nextProps, scales);
+      return {
+        ...acc,
+        datumProcessor: Treemap.getDatumProcessor(nextProps, acc.scales),
+      };
+    },
+    animationProcessor: (acc, _, prevProps, nextProps) => {
+      if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
+        return acc;
+      }
 
       // Get animation processor.
       const animationProcessor = partial(
         animationProcessorFactory,
         nextProps.animate,
         [...TreemapCell.animatable, ...TreemapText.animatable],
-        datumProcessor,
+        acc.datumProcessor,
       );
 
       return {
         ...acc,
         animationProcessor,
-        datumProcessor,
-        scales,
       };
     },
   };
@@ -189,7 +207,7 @@ export default class Treemap extends React.PureComponent<
   /**
    * Get or update a treemap layout function.
    */
-  static getLayout = ({ width, height, ...props }, layout) => {
+  static getLayout = ({ width, height, layoutOptions }, layout) => {
     if (layout) {
       // If a layout already exists, return it with an updated height.
       return layout.size([width, height]);
@@ -199,7 +217,7 @@ export default class Treemap extends React.PureComponent<
       padding,
       round,
       tile,
-    } = props.layoutOptions;
+    } = layoutOptions;
 
     return treemap()
       .tile(tile)
@@ -211,22 +229,30 @@ export default class Treemap extends React.PureComponent<
   /**
    * Get data laid out in a treemap form.
    */
-  static layoutData({ data, showToDepth, rootNodeId, selection }, layout) {
+  static layoutData(
+    {
+      data,
+      focused,
+      showToDepth,
+      rootNodeId,
+      selection,
+    },
+    layout,
+  ) {
     const unsorted = layout(data).descendants();
 
     const filtered = unsorted.filter(({ children, depth, ...node }) => (
       // At the current depth
       (depth === showToDepth
-        // or at a previous depth without children
-        || (depth < showToDepth && !children))
+      // or at a previous depth without children
+      || (depth < showToDepth && !children))
       && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
     ));
 
-    return (
-      selection
-        ? sortBy(filtered, datum => findIndex(selection, selected => selected.includes(datum.id)))
-        : filtered
-    );
+    const selectedAndFocused = [...(selection || []), focused];
+
+    // Sort the data, leaving any selected Ids on top of treemap.
+    return sortBy(filtered, datum => findIndex(selectedAndFocused, select => select === datum.id));
   }
 
   static nodeHasRootAsAncestor(rootNodeId, node) {
@@ -238,7 +264,7 @@ export default class Treemap extends React.PureComponent<
     if (node.id === rootNodeId) {
       return true;
     }
-    // If we've reaced the base of the hierarchy without finding the root return false
+    // If we've reached the base of the hierarchy without finding the root, return false.
     if (!node.parent) {
       return false;
     }
@@ -419,13 +445,18 @@ export default class Treemap extends React.PureComponent<
       doubleClickTiming,
       defsUrl,
       dataAccessors,
+      focused,
+      focusedStyle,
       fontPadding,
       fontSizeExtent,
       onClick,
       onDoubleClick,
+      onMouseEnter,
       onMouseLeave,
       onMouseMove,
       onMouseOver,
+      selection,
+      selectedStyle,
       stroke,
       strokeWidth,
     } = this.props;
@@ -438,13 +469,18 @@ export default class Treemap extends React.PureComponent<
         defsUrl={defsUrl}
         dataAccessors={dataAccessors}
         doubleClickTiming={doubleClickTiming}
+        focused={focused === datum.id}
+        focusedStyle={focusedStyle}
         fontPadding={fontPadding}
         fontSizeExtent={fontSizeExtent}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
+        onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onMouseMove={onMouseMove}
         onMouseOver={onMouseOver}
+        selected={includes(selection, datum.id)}
+        selectedStyle={selectedStyle}
         stroke={stroke}
         strokeWidth={strokeWidth}
         {...processedDatum}

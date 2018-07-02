@@ -1,3 +1,9 @@
+import {
+  combineStyles,
+  memoizeByLastCall,
+  propsChanged,
+  stateFromPropUpdates,
+} from 'ihme-ui';
 import React from 'react';
 
 import DoubleClickReactComponent, {
@@ -15,6 +21,8 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   colorScale?: (input: number | string) => string;
   datum: any;
   defsUrl: string;
+  focused?: boolean;
+  focusedStyle: React.CSSProperties;
   fontSize: number;
   fontPadding: number;
   fontSizeExtent: [number, number];
@@ -22,13 +30,17 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   label: string;
   onClick: (...args: any[]) => void;
   onDoubleClick: (...args: any[]) => void;
+  onMouseEnter: (...args: any[]) => void;
   onMouseLeave: (...args: any[]) => void;
   onMouseMove: (...args: any[]) => void;
   onMouseOver: (...args: any[]) => void;
   opacity: number;
   rotate: number;
+  selected: boolean;
+  selectedStyle?: React.CSSProperties;
   stroke: string;
   strokeWidth: number | string;
+  style?: React.CSSProperties;
   width: number;
   x0: number;
   x1: number;
@@ -38,12 +50,63 @@ interface TreemapCellProps extends DoubleClickComponentProps {
   y_translate: number;
 }
 
+interface TreemapCellState {
+  style: React.CSSProperties;
+}
+
 export default class TreemapCell
-extends DoubleClickReactComponent<TreemapCellProps, {}> {
+extends DoubleClickReactComponent<
+  TreemapCellProps,
+  TreemapCellState
+> {
   static defaultProps = {
     animate: false,
     doubleClickTiming: 250,
     attributionValue: false,
+  };
+
+  /**
+   * Set/update state in IHME-UI Fashion.
+   */
+  static propUpdates = {
+    style: (acc, _, prevProps, nextProps) => {
+      const stylePropNames = [
+        'cellFill',
+        'focused',
+        'focusedStyle',
+        'selected',
+        'selectedStyle',
+        'stroke',
+        'strokeWidth',
+        'style',
+      ];
+
+      if (!propsChanged(prevProps, nextProps, stylePropNames)) {
+        return acc;
+      }
+
+      const styles = [
+        {
+          fill: nextProps.cellFill,
+          stroke: nextProps.stroke,
+          strokeWidth: nextProps.strokeWidth,
+        },
+        nextProps.style,
+      ];
+
+      if (nextProps.selected) {
+        styles.push(nextProps.selectedStyle);
+      }
+
+      if (nextProps.focused) {
+        styles.push(nextProps.focusedStyle);
+      }
+
+      return {
+        ...acc,
+        style: TreemapCell.combineStyles(styles),
+      };
+    },
   };
 
   static animatable = [
@@ -55,6 +118,8 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     'height',
     'width',
   ];
+
+  static combineStyles = memoizeByLastCall(combineStyles);
 
   static getDatumProcessor({ xScale, yScale }) {
     return (datum) => {
@@ -78,10 +143,24 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
   constructor(props) {
     super(props);
     this.handleClicks = this.handleClicks.bind(this);
+    this.state = stateFromPropUpdates(TreemapCell.propUpdates, {}, props, {});
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState(stateFromPropUpdates(TreemapCell.propUpdates, this.props, nextProps, this.state));
   }
 
   handleClicks(event) {
     super.handleClicks(event, this.props.datum, this);
+  }
+
+  onMouseEnter = event => {
+    const {
+      datum,
+      onMouseEnter,
+    } = this.props;
+
+    onMouseEnter(event, datum, this);
   }
 
   onMouseLeave = event => {
@@ -162,29 +241,18 @@ extends DoubleClickReactComponent<TreemapCellProps, {}> {
     );
   }
 
-  renderRect = () => {
-    const {
-      cellFill,
-      stroke,
-      strokeWidth,
-      height,
-      width,
-    } = this.props;
-
-    return (
-      <rect
-        fill={cellFill}
-        height={Math.max(0, height)}
-        onClick={this.handleClicks}
-        onMouseLeave={this.onMouseLeave}
-        onMouseMove={this.onMouseMove}
-        onMouseOver={this.onMouseOver}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        width={Math.max(0, width)}
-      />
-    );
-  }
+  renderRect = () => (
+    <rect
+      height={Math.max(0, this.props.height)}
+      onClick={this.handleClicks}
+      onMouseEnter={this.onMouseEnter}
+      onMouseLeave={this.onMouseLeave}
+      onMouseMove={this.onMouseMove}
+      onMouseOver={this.onMouseOver}
+      style={this.state.style}
+      width={Math.max(0, this.props.width)}
+    />
+  )
 
   render() {
     const {
