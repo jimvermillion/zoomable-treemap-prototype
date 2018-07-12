@@ -97,7 +97,7 @@ interface AttributionDataAccessors {
 }
 
 export interface TreemapDataAccessors {
-  label: string;
+  label: (datum: any) => string | string;
   attribution?: AttributionDataAccessors;
 }
 
