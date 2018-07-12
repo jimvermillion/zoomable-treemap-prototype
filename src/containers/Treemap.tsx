@@ -12,6 +12,7 @@ import {
 } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
 import {
+  propResolver,
   propsChanged,
   stateFromPropUpdates,
 } from 'ihme-ui';
@@ -490,7 +491,7 @@ extends React.PureComponent<
   ): TreemapTextDatumProcessor {
     return (datum, { height, width }) => {
       // Get the label from the datum.
-      const label = datum.data[props.dataAccessors.label];
+      const label = propResolver(datum.data, props.dataAccessors.label);
 
       // Assemble `props` needed by `<TreemapText/>`.
       const textProps = {
