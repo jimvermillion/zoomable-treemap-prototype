@@ -192,13 +192,13 @@ extends React.PureComponent<
    */
   static propUpdates = {
     // Initialize/update treemap-layout function.
-    layout: (acc, _, prevProps, nextProps, state) => {
+    layout: (acc, _, prevProps, nextProps, { layout }) => {
       if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
       return {
         ...acc,
-        layout: Treemap.getLayout(nextProps, state && state.layout),
+        layout: Treemap.getLayout(nextProps, layout),
       };
     },
     // Process data through the treemap layout.
@@ -212,13 +212,13 @@ extends React.PureComponent<
       };
     },
     // Get initial x/y scales.
-    scales: (acc, _, prevProps, nextProps, state) => {
+    scales: (acc, _, prevProps, nextProps, { scales }) => {
       if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
       return {
         ...acc,
-        scales: Treemap.getScales(nextProps, state),
+        scales: Treemap.getScales(nextProps, scales),
       };
     },
     // Establish datum processor.
@@ -513,11 +513,11 @@ extends React.PureComponent<
 
   constructor(props) {
     super(props);
-    this.state = stateFromPropUpdates(Treemap.propUpdates, {}, props, {});
+    this.state = stateFromPropUpdates(Treemap.propUpdates, {}, props, {}, {});
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState(stateFromPropUpdates(Treemap.propUpdates, this.props, nextProps, this.state));
+    this.setState(stateFromPropUpdates(Treemap.propUpdates, this.props, nextProps, this.state, this.state));
   }
 
   processData() {
