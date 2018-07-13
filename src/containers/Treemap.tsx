@@ -123,6 +123,7 @@ interface TreemapProps {
   fontSize?: number;
   fontSizeExtent?: [number, number];
   height: number;
+  hierarchy: HierarchyNode<TreemapDatum>;
   layoutOptions?: LayoutOptions;
   onClick?: TreemapEventHandler;
   onDoubleClick?: TreemapEventHandler;
@@ -364,7 +365,7 @@ extends React.PureComponent<
     // Get root node that has been isolated.
     const node = Treemap.getNodeById(
       props.rootNodeId,
-      props.data as HierarchyRectangularNode<TreemapDatum>,
+      props.hierarchy,
     );
 
     // Determine domain and range for x and y.
@@ -373,7 +374,7 @@ extends React.PureComponent<
       xRange,
       yDomain,
       yRange,
-    } = Treemap.getDomainsAndRanges(props, node);
+    } = Treemap.getDomainsAndRanges(props, node as HierarchyRectangularNode<TreemapDatum>);
 
     // Return object with xScale, yScale properties.
     return {
@@ -387,8 +388,8 @@ extends React.PureComponent<
    */
   static getNodeById(
     id: NodeId,
-    root: HierarchyRectangularNode<TreemapDatum>,
-  ): HierarchyRectangularNode<TreemapDatum> | null {
+    root: HierarchyNode<TreemapDatum>,
+  ): HierarchyNode<TreemapDatum> | null {
     // If id matches root.id, we found the node.
     if (root.id === id) {
       return root;
