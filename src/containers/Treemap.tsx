@@ -18,6 +18,7 @@ import {
 } from 'ihme-ui';
 import {
   findIndex,
+  get as getValue,
   includes,
   isEmpty,
   noop,
@@ -307,10 +308,11 @@ extends React.PureComponent<
     const tree = hierarchy
       .sum((metaDatum: any) => {
         const node = Treemap.getNodeById(String(metaDatum[id]), hierarchy);
+        const nodeValue = getValue(data, [metaDatum[id], value], 1e-100);
         // Only count leaf nodes.
         return (
           isEmpty(node && node.children)
-            ? data[metaDatum[id]][value]
+            ? nodeValue
             : 0
         );
       })
