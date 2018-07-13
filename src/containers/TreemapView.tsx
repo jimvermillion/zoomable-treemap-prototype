@@ -1,10 +1,15 @@
-import { HierarchyNode } from 'd3-hierarchy';
+import {
+  HierarchyNode,
+  stratify,
+} from 'd3-hierarchy';
+import { keyBy } from 'lodash-es';
 import React from 'react';
 
+import { RawDatum } from './App';
 import Treemap, { TreemapDataAccessors } from './Treemap';
 
 interface TreemapViewProps {
-  data: HierarchyNode<any>;
+  data: RawDatum[];
   dataAccessors?: TreemapDataAccessors;
   height?: number;
   rootNodeId?: number | string;
@@ -38,6 +43,18 @@ extends React.PureComponent<
       value: 'value',
     },
   };
+
+  static stratifyData(data: RawDatum[]): HierarchyNode<RawDatum> {
+    return stratify<RawDatum>()
+      .id((d: RawDatum) => String(d.location_id))
+      .parentId((d: RawDatum) => (
+        d.parent_location_id
+          ? String(d.parent_location_id)
+          : null
+      ))(data)
+      .sum(d => d.value)
+      .sort((a, b) =>  (b.height - a.height || b.value - a.value));
+  }
 
   constructor(props) {
     super(props);
@@ -139,11 +156,12 @@ extends React.PureComponent<
 
     return (
       <Treemap
-        data={data}
+        data={keyBy(data, 'location_id')}
         rootNodeId={rootNodeId}
         dataAccessors={dataAccessors}
         focused={focused}
         focusedStyle={FOCUSED_STYLE}
+        hierarchy={TreemapView.stratifyData(data)}
         showToDepth={showToDepth}
         onClick={this.zoomIn}
         onDoubleClick={this.zoomOut}
