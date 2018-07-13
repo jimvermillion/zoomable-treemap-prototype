@@ -16,11 +16,14 @@ import {
   propsChanged,
   stateFromPropUpdates,
 } from 'ihme-ui';
-import findIndex from 'lodash-es/findIndex';
-import includes from 'lodash-es/includes';
-import noop from 'lodash-es/noop';
-import partial from 'lodash-es/partial';
-import sortBy from 'lodash-es/sortBy';
+import {
+  findIndex,
+  includes,
+  isEmpty,
+  noop,
+  partial,
+  sortBy,
+} from 'lodash-es';
 import React from 'react';
 import { NodeGroup } from 'react-move';
 
