@@ -100,8 +100,11 @@ interface AttributionDataAccessors {
 }
 
 export interface TreemapDataAccessors {
-  label: (datum: any) => string | string;
   attribution?: AttributionDataAccessors;
+  label: (datum: any) => string | string;
+  id: string | number;
+  parentId?: string | number;
+  value: string;
 }
 
 type NodeId = number | string;
@@ -287,24 +290,42 @@ extends React.PureComponent<
   static layoutData(
     {
       data,
+      dataAccessors: {
+        id,
+        value,
+      },
       focused,
+      hierarchy,
       showToDepth,
       rootNodeId,
       selection,
     }: TreemapProps,
     layout: TreemapLayout<TreemapDatum>,
   ): Array<HierarchyRectangularNode<TreemapDatum>> {
-    // Get d3-treemap-ified data.
-    const unsorted = layout(data).descendants();
+    // Apply values to data from hierarchy structure
+    const tree = hierarchy
+      .sum((metaDatum: any) => {
+        const node = Treemap.getNodeById(String(metaDatum[id]), hierarchy);
+        // Only count leaf nodes.
+        return (
+          isEmpty(node && node.children)
+            ? data[metaDatum[id]][value]
+            : 0
+        );
+      })
+      // TODO: this should be a default sort function.
+      .sort((a, b) =>  (b.height - a.height || b.value - a.value));
 
     // Filter data for what is to be shown.
-    const filtered = unsorted.filter(({ children, depth, ...node }) => (
-      // At the current depth
-      (depth === showToDepth
-      // or at a previous depth without children
-      || (depth < showToDepth && !children))
-      && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
-    ));
+    const filtered = layout(tree)
+      .descendants()
+      .filter(({ children, depth, ...node }) => (
+        // At the current depth
+        (depth === showToDepth
+          // or at a previous depth without children
+          || (depth < showToDepth && !children))
+        && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
+      ));
 
     // Array of `focused` id, and `selection` ids.
     const selectedAndFocused = [...(selection || []), focused];

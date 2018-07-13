@@ -29,10 +29,13 @@ extends React.PureComponent<
 > {
   static defaultProps = {
     dataAccessors: {
+      id: 'location_id',
+      parentId: 'parent_location_id',
       label: 'location_name',
       attribution: {
         value: 'attribution',
       },
+      value: 'value',
     },
   };
 
