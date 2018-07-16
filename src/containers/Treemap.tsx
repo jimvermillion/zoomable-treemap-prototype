@@ -102,6 +102,7 @@ interface AttributionDataAccessors {
 
 export interface TreemapDataAccessors {
   attribution?: AttributionDataAccessors;
+  color?: (datum: any) => string | string;
   label: (datum: any) => string | string;
   id: string | number;
   parentId?: string | number;
@@ -483,7 +484,10 @@ extends React.PureComponent<
    * Get a function that processes a treemap datum for consumption by a <TreemapCell/> component.
    */
   static getCellDatumProcessor(
-    { dataAccessors: { attribution } }: TreemapProps,
+    {
+      colorScale,
+      dataAccessors: { attribution, color },
+    }: TreemapProps,
     scales: ScaleSet,
   ): TreemapCellDatumProcessor {
     const cellDatumProcessor = TreemapCell.getDatumProcessor(scales);
@@ -502,9 +506,12 @@ extends React.PureComponent<
         && datum.data[attribution.fill]
       );
 
+      const cellFill = propResolver(datum, color) || colorScale(datum.id);
+
       return {
         attributionFill,
         attributionValue,
+        cellFill,
         ...cellDatumProcessor(datum),
       };
     };
@@ -564,25 +571,25 @@ extends React.PureComponent<
     data: datum,
     key,
     state: {
-      x_translate,
-      y_translate,
-      rotate,
-      fontSize,
-      label,
       attributionFill,
       attributionValue,
+      cellFill,
+      fontSize,
+      height,
+      label,
+      opacity,
+      rotate,
+      width,
       x0,
       x1,
+      x_translate,
       y0,
       y1,
-      opacity,
-      height,
-      width,
+      y_translate,
     },
   }) => {
     const {
       animate,
-      colorScale,
       doubleClickTiming,
       defsUrl,
       focused,
@@ -606,7 +613,7 @@ extends React.PureComponent<
         key={key}
         attributionFill={attributionFill}
         attributionValue={attributionValue}
-        cellFill={colorScale(datum.data.type)}
+        cellFill={cellFill}
         datum={datum}
         defsUrl={defsUrl}
         doubleClickTiming={doubleClickTiming}
