@@ -172,9 +172,9 @@ export default class TreemapText extends React.PureComponent<TreemapTextProps> {
         style={{
           cursor: 'default',
           fontSize: fontSize as number,
-          transform: `translate(${x_translate}px, ${y_translate}px) rotate(${rotate}deg)`,
           userSelect: 'none',
         }}
+        transform={`translate(${x_translate}, ${y_translate}) rotate(${rotate})`}
       >
         {label}
       </text>
