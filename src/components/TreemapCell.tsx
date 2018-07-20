@@ -280,10 +280,8 @@ extends DoubleClickReactComponent<
     return (
       <g
         key={`cell-${datum.id}`}
-        style={{
-          opacity: opacity as number,
-          transform: `translate(${x0}px, ${y0}px)`,
-        }}
+        style={{ opacity: opacity as number }}
+        transform={`translate(${x0}, ${y0})`}
       >
         {this.renderRect()}
         {attributionValue && this.renderAttribution()}

@@ -12,14 +12,19 @@ import {
 } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
 import {
+  propResolver,
   propsChanged,
   stateFromPropUpdates,
 } from 'ihme-ui';
-import findIndex from 'lodash-es/findIndex';
-import includes from 'lodash-es/includes';
-import noop from 'lodash-es/noop';
-import partial from 'lodash-es/partial';
-import sortBy from 'lodash-es/sortBy';
+import {
+  findIndex,
+  get as getValue,
+  includes,
+  isEmpty,
+  noop,
+  partial,
+  sortBy,
+} from 'lodash-es';
 import React from 'react';
 import { NodeGroup } from 'react-move';
 
@@ -96,8 +101,12 @@ interface AttributionDataAccessors {
 }
 
 export interface TreemapDataAccessors {
-  label: string;
   attribution?: AttributionDataAccessors;
+  color?: (datum: any) => string | string;
+  label: (datum: any) => string | string;
+  id: string | number;
+  parentId?: string | number;
+  value: string;
 }
 
 type NodeId = number | string;
@@ -116,6 +125,7 @@ interface TreemapProps {
   fontSize?: number;
   fontSizeExtent?: [number, number];
   height: number;
+  hierarchy: HierarchyNode<TreemapDatum>;
   layoutOptions?: LayoutOptions;
   onClick?: TreemapEventHandler;
   onDoubleClick?: TreemapEventHandler;
@@ -191,13 +201,13 @@ extends React.PureComponent<
    */
   static propUpdates = {
     // Initialize/update treemap-layout function.
-    layout: (acc, _, prevProps, nextProps, state) => {
+    layout: (acc, _, prevProps, nextProps, { layout }) => {
       if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
       return {
         ...acc,
-        layout: Treemap.getLayout(nextProps, state && state.layout),
+        layout: Treemap.getLayout(nextProps, layout),
       };
     },
     // Process data through the treemap layout.
@@ -211,13 +221,13 @@ extends React.PureComponent<
       };
     },
     // Get initial x/y scales.
-    scales: (acc, _, prevProps, nextProps, state) => {
+    scales: (acc, _, prevProps, nextProps, { scales }) => {
       if (!propsChanged(prevProps, nextProps, Treemap.dataPropNames)) {
         return acc;
       }
       return {
         ...acc,
-        scales: Treemap.getScales(nextProps, state),
+        scales: Treemap.getScales(nextProps, scales),
       };
     },
     // Establish datum processor.
@@ -283,24 +293,43 @@ extends React.PureComponent<
   static layoutData(
     {
       data,
+      dataAccessors: {
+        id,
+        value,
+      },
       focused,
+      hierarchy,
       showToDepth,
       rootNodeId,
       selection,
     }: TreemapProps,
     layout: TreemapLayout<TreemapDatum>,
   ): Array<HierarchyRectangularNode<TreemapDatum>> {
-    // Get d3-treemap-ified data.
-    const unsorted = layout(data).descendants();
+    // Apply values to data from hierarchy structure
+    const tree = hierarchy
+      .sum((metaDatum: any) => {
+        const node = Treemap.getNodeById(String(metaDatum[id]), hierarchy);
+        const nodeValue = getValue(data, [metaDatum[id], value], 1e-100);
+        // Only count leaf nodes.
+        return (
+          isEmpty(node && node.children)
+            ? nodeValue
+            : 0
+        );
+      })
+      // TODO: this should be a default sort function.
+      .sort((a, b) =>  (b.height - a.height || b.value - a.value));
 
     // Filter data for what is to be shown.
-    const filtered = unsorted.filter(({ children, depth, ...node }) => (
-      // At the current depth
-      (depth === showToDepth
-      // or at a previous depth without children
-      || (depth < showToDepth && !children))
-      && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
-    ));
+    const filtered = layout(tree)
+      .descendants()
+      .filter(({ children, depth, ...node }) => (
+        // At the current depth
+        (depth === showToDepth
+          // or at a previous depth without children
+          || (depth < showToDepth && !children))
+        && Treemap.nodeHasRootAsAncestor(rootNodeId, node)
+      ));
 
     // Array of `focused` id, and `selection` ids.
     const selectedAndFocused = [...(selection || []), focused];
@@ -339,7 +368,7 @@ extends React.PureComponent<
     // Get root node that has been isolated.
     const node = Treemap.getNodeById(
       props.rootNodeId,
-      props.data as HierarchyRectangularNode<TreemapDatum>,
+      props.hierarchy,
     );
 
     // Determine domain and range for x and y.
@@ -348,7 +377,7 @@ extends React.PureComponent<
       xRange,
       yDomain,
       yRange,
-    } = Treemap.getDomainsAndRanges(props, node);
+    } = Treemap.getDomainsAndRanges(props, node as HierarchyRectangularNode<TreemapDatum>);
 
     // Return object with xScale, yScale properties.
     return {
@@ -362,8 +391,8 @@ extends React.PureComponent<
    */
   static getNodeById(
     id: NodeId,
-    root: HierarchyRectangularNode<TreemapDatum>,
-  ): HierarchyRectangularNode<TreemapDatum> | null {
+    root: HierarchyNode<TreemapDatum>,
+  ): HierarchyNode<TreemapDatum> | null {
     // If id matches root.id, we found the node.
     if (root.id === id) {
       return root;
@@ -455,7 +484,10 @@ extends React.PureComponent<
    * Get a function that processes a treemap datum for consumption by a <TreemapCell/> component.
    */
   static getCellDatumProcessor(
-    { dataAccessors: { attribution } }: TreemapProps,
+    {
+      colorScale,
+      dataAccessors: { attribution, color },
+    }: TreemapProps,
     scales: ScaleSet,
   ): TreemapCellDatumProcessor {
     const cellDatumProcessor = TreemapCell.getDatumProcessor(scales);
@@ -474,9 +506,12 @@ extends React.PureComponent<
         && datum.data[attribution.fill]
       );
 
+      const cellFill = propResolver(datum, color) || colorScale(datum.id);
+
       return {
         attributionFill,
         attributionValue,
+        cellFill,
         ...cellDatumProcessor(datum),
       };
     };
@@ -490,7 +525,7 @@ extends React.PureComponent<
   ): TreemapTextDatumProcessor {
     return (datum, { height, width }) => {
       // Get the label from the datum.
-      const label = datum.data[props.dataAccessors.label];
+      const label = propResolver(datum.data, props.dataAccessors.label);
 
       // Assemble `props` needed by `<TreemapText/>`.
       const textProps = {
@@ -512,11 +547,11 @@ extends React.PureComponent<
 
   constructor(props) {
     super(props);
-    this.state = stateFromPropUpdates(Treemap.propUpdates, {}, props, {});
+    this.state = stateFromPropUpdates(Treemap.propUpdates, {}, props, {}, {});
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState(stateFromPropUpdates(Treemap.propUpdates, this.props, nextProps, this.state));
+    this.setState(stateFromPropUpdates(Treemap.propUpdates, this.props, nextProps, this.state, this.state));
   }
 
   processData() {
@@ -536,25 +571,25 @@ extends React.PureComponent<
     data: datum,
     key,
     state: {
-      x_translate,
-      y_translate,
-      rotate,
-      fontSize,
-      label,
       attributionFill,
       attributionValue,
+      cellFill,
+      fontSize,
+      height,
+      label,
+      opacity,
+      rotate,
+      width,
       x0,
       x1,
+      x_translate,
       y0,
       y1,
-      opacity,
-      height,
-      width,
+      y_translate,
     },
   }) => {
     const {
       animate,
-      colorScale,
       doubleClickTiming,
       defsUrl,
       focused,
@@ -578,7 +613,7 @@ extends React.PureComponent<
         key={key}
         attributionFill={attributionFill}
         attributionValue={attributionValue}
-        cellFill={colorScale(datum.data.type)}
+        cellFill={cellFill}
         datum={datum}
         defsUrl={defsUrl}
         doubleClickTiming={doubleClickTiming}
